@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 import {
@@ -778,7 +778,8 @@ export default function Cosmos() {
           g.id === 'sombrero'
             ? buildSombrero(g, 9_000, center)
             : buildSpiralGalaxy(g, 9_000, center)
-        return { def: g, center, geo }
+        // Own material per galaxy so each can fade by distance.
+        return { def: g, center, geo, mat: pointsMaterial(1.3, 0.9) }
       }),
     [],
   )
@@ -813,7 +814,20 @@ export default function Cosmos() {
   const mwMat = useMemo(() => pointsMaterial(1.2, 0.85), [])
   const kuiperMat = useMemo(() => pointsMaterial(1.4, 0.8), [])
   const oortMat = useMemo(() => pointsMaterial(1.2, 0.7), [])
-  const galaxyDiskMat = useMemo(() => pointsMaterial(1.3, 0.95), [])
+
+  // Distance-fade the named galaxies: faint, distant smudges from afar, only
+  // resolving into bright spirals as you approach their scale — so the wide
+  // zoom reads naturally instead of every galaxy blazing at the same size.
+  useFrame(({ camera }) => {
+    for (const g of namedGalaxies) {
+      const dist = camera.position.distanceTo(g.center)
+      const r = g.def.radius
+      const t = THREE.MathUtils.clamp((dist - r * 5) / (r * 55), 0, 1)
+      // eslint-disable-next-line react-hooks/immutability -- R3F per-frame mutation
+      g.mat.opacity = THREE.MathUtils.lerp(0.9, 0.08, t)
+    }
+  })
+
   const galaxyMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -905,7 +919,7 @@ export default function Cosmos() {
 
       {/* Named spiral galaxies you can fly to (Andromeda, Triangulum, …). */}
       {namedGalaxies.map((g) => (
-        <points key={g.def.id} geometry={g.geo} material={galaxyDiskMat} frustumCulled={false} />
+        <points key={g.def.id} geometry={g.geo} material={g.mat} frustumCulled={false} />
       ))}
       {/* Soft coloured glow halos behind the nebulae + Crab: a broad outer halo
           plus a tighter, brighter inner core so they read as luminous clouds. */}

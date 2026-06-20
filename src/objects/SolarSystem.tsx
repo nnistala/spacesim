@@ -147,22 +147,23 @@ function OrbitLine({ planet }: { planet: PlanetData }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ref = useRef<any>(null)
 
-  // Fade the orbit rings out once the camera is far from the Sun, so from across
-  // the galaxy the solar system doesn't read as a tiny ringed "Saturn" disc.
+  // Orbit rings are a faint navigation hint, not a real object — keep them
+  // subtle and fade them out as you leave the planetary system, so from outside
+  // the solar system never reads as a bright concentric-ring "blueprint".
   useFrame(({ camera }) => {
     const mat = ref.current?.material
     if (!mat) return
     const d = camera.position.length() // distance from the Sun (origin)
-    mat.opacity = 0.12 * THREE.MathUtils.clamp(1 - (d - 22000) / 23000, 0, 1)
+    mat.opacity = 0.07 * THREE.MathUtils.clamp(1 - (d - 9000) / 14000, 0, 1)
   })
 
   return (
     <Line
       ref={ref}
       points={points}
-      color="#4488cc"
+      color="#3a6ea5"
       transparent
-      opacity={0.12}
+      opacity={0.07}
       lineWidth={1}
       depthWrite={false}
     />
