@@ -64,7 +64,7 @@ interface Cloud {
 
 export default function Nebulosity({
   radius = 80_000,
-  count = 60,
+  count = 260,
 }: {
   radius?: number
   count?: number
@@ -73,20 +73,23 @@ export default function Nebulosity({
   const clouds = useMemo<Cloud[]>(() => {
     const arr: Cloud[] = []
     for (let i = 0; i < count; i++) {
-      // Concentrate near the galactic plane (XZ), like the star field.
-      const lat = gaussian(0.32)
+      // Hug the galactic plane tightly (most emission lives in the band) so the
+      // colour reads as faint wispy structure, not big blobs floating overhead.
+      const lat = gaussian(0.16)
       const lon = Math.random() * Math.PI * 2
-      const r = radius * (0.65 + Math.random() * 0.55)
+      const r = radius * (0.55 + Math.random() * 0.7)
       const cosLat = Math.cos(lat)
       const p = PALETTE[(Math.random() * PALETTE.length) | 0]
-      // Elongate some clouds into trails (wider than tall, random roll).
-      const s = radius * (0.12 + Math.random() * 0.4)
-      const stretch = 1 + Math.random() * 1.6
+      // Small, elongated wisps (many overlapping → texture, not a smear).
+      const s = radius * (0.03 + Math.random() * 0.1)
+      const stretch = 1.3 + Math.random() * 2.2
+      // Dim + slightly desaturated so it's a faint tint, never a neon cloud.
+      const dim = 0.55 + Math.random() * 0.3
       arr.push({
         pos: [r * cosLat * Math.cos(lon), r * Math.sin(lat), r * cosLat * Math.sin(lon)],
         scale: [s * stretch, s, 1],
-        color: new THREE.Color(p[0], p[1], p[2]),
-        opacity: 0.05 + Math.random() * 0.13,
+        color: new THREE.Color(p[0], p[1], p[2]).multiplyScalar(dim),
+        opacity: 0.018 + Math.random() * 0.05,
         rot: Math.random() * Math.PI * 2,
       })
     }

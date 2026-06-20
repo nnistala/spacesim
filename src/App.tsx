@@ -41,8 +41,9 @@ function SolarSystemScene() {
           Fewer background stars so space reads as a colourful deep field rather
           than a dense wall of white dots. */}
       <StarField radius={85_000} backgroundCount={55_000} />
-      {/* Diffuse pink/purple/cyan/gold gas clouds — the colourful Chandra look. */}
-      <Nebulosity radius={80_000} count={60} />
+      {/* Faint pink/purple/cyan/gold interstellar gas wisps hugging the galactic
+          plane — colour without big artificial blobs. */}
+      <Nebulosity radius={80_000} count={260} />
       {/* Our nearest neighbour — a real, fly-to-able triple-star system. */}
       <AlphaCentauri />
       {/* Everything beyond — Oort, Milky Way, cosmic web, observable edge. */}
