@@ -2,116 +2,108 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 
 // ===========================================================================
-// NEBULOSITY — diffuse coloured interstellar gas clouds (the Chandra look)
+// NEBULOSITY — faint interstellar gas painted onto the background sky.
 // ---------------------------------------------------------------------------
-// Soft, large, additive sprites in a pink / purple / violet / cyan / gold
-// palette, scattered through a shell around the observer and concentrated near
-// the galactic plane. They give deep space the colourful, gaseous backdrop of
-// NASA's X-ray/optical composites instead of plain black with white dots.
+// A single large sky-sphere with a procedural fractal-noise (FBM) texture, so
+// the colour is CONTINUOUS and seamless — no repeating sprite "petals". Emission
+// concentrates in the galactic-plane band and is tinted with a soft
+// pink/purple/violet/cyan/gold palette, kept faint so it reads as real
+// background gas rather than a foreground cloud.
 // ===========================================================================
 
 const PALETTE: [number, number, number][] = [
-  [1.0, 0.32, 0.62], // magenta / pink
-  [0.78, 0.3, 1.0], // purple
-  [0.5, 0.38, 0.98], // violet
-  [0.32, 0.78, 1.0], // cyan
-  [1.0, 0.72, 0.34], // gold
-  [0.95, 0.45, 0.85], // rose
+  [0.85, 0.25, 0.5], // magenta / pink
+  [0.52, 0.26, 0.82], // purple
+  [0.36, 0.32, 0.85], // violet
+  [0.22, 0.6, 0.85], // cyan
+  [0.85, 0.6, 0.32], // gold
 ]
 
-function gaussian(sigma: number): number {
-  let u = 0
-  let v = 0
-  while (u === 0) u = Math.random()
-  while (v === 0) v = Math.random()
-  return sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
-}
+function makeNebulaTexture(w: number, h: number): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
+  const img = ctx.createImageData(w, h)
+  const d = img.data
 
-// Soft, slightly irregular cloud sprite (radial base + a few offset blobs).
-function makeCloudTexture(): THREE.Texture {
-  const c = document.createElement('canvas')
-  c.width = c.height = 256
-  const ctx = c.getContext('2d')!
-  const base = ctx.createRadialGradient(128, 128, 0, 128, 128, 128)
-  base.addColorStop(0, 'rgba(255,255,255,0.85)')
-  base.addColorStop(0.3, 'rgba(255,255,255,0.32)')
-  base.addColorStop(0.65, 'rgba(255,255,255,0.08)')
-  base.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = base
-  ctx.fillRect(0, 0, 256, 256)
-  // Wispy irregularity.
-  ctx.globalCompositeOperation = 'lighter'
-  for (let i = 0; i < 16; i++) {
-    const x = 128 + gaussian(45)
-    const y = 128 + gaussian(45)
-    const r = 25 + Math.random() * 70
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-    g.addColorStop(0, `rgba(255,255,255,${0.08 + Math.random() * 0.14})`)
-    g.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, 256, 256)
+  const hash = (x: number, y: number): number => {
+    let n = (x * 374761393 + y * 668265263) | 0
+    n = ((n ^ (n >> 13)) * 1274126177) | 0
+    return ((n ^ (n >> 16)) >>> 0) / 4294967296
   }
-  return new THREE.CanvasTexture(c)
-}
-
-interface Cloud {
-  pos: [number, number, number]
-  scale: [number, number, number]
-  color: THREE.Color
-  opacity: number
-  rot: number
-}
-
-export default function Nebulosity({
-  radius = 80_000,
-  count = 260,
-}: {
-  radius?: number
-  count?: number
-}) {
-  const tex = useMemo(makeCloudTexture, [])
-  const clouds = useMemo<Cloud[]>(() => {
-    const arr: Cloud[] = []
-    for (let i = 0; i < count; i++) {
-      // Hug the galactic plane tightly (most emission lives in the band) so the
-      // colour reads as faint wispy structure, not big blobs floating overhead.
-      const lat = gaussian(0.16)
-      const lon = Math.random() * Math.PI * 2
-      const r = radius * (0.55 + Math.random() * 0.7)
-      const cosLat = Math.cos(lat)
-      const p = PALETTE[(Math.random() * PALETTE.length) | 0]
-      // Small, elongated wisps (many overlapping → texture, not a smear).
-      const s = radius * (0.03 + Math.random() * 0.1)
-      const stretch = 1.3 + Math.random() * 2.2
-      // Dim + slightly desaturated so it's a faint tint, never a neon cloud.
-      const dim = 0.55 + Math.random() * 0.3
-      arr.push({
-        pos: [r * cosLat * Math.cos(lon), r * Math.sin(lat), r * cosLat * Math.sin(lon)],
-        scale: [s * stretch, s, 1],
-        color: new THREE.Color(p[0], p[1], p[2]).multiplyScalar(dim),
-        opacity: 0.018 + Math.random() * 0.05,
-        rot: Math.random() * Math.PI * 2,
-      })
+  const vnoise = (x: number, y: number): number => {
+    const ix = Math.floor(x)
+    const iy = Math.floor(y)
+    const fx = x - ix
+    const fy = y - iy
+    const sx = fx * fx * (3 - 2 * fx)
+    const sy = fy * fy * (3 - 2 * fy)
+    const n00 = hash(ix, iy)
+    const n10 = hash(ix + 1, iy)
+    const n01 = hash(ix, iy + 1)
+    const n11 = hash(ix + 1, iy + 1)
+    return (n00 + (n10 - n00) * sx) + ((n01 + (n11 - n01) * sx) - (n00 + (n10 - n00) * sx)) * sy
+  }
+  const fbm = (x: number, y: number, oct: number): number => {
+    let v = 0
+    let a = 0.5
+    let f = 1
+    for (let i = 0; i < oct; i++) {
+      v += a * vnoise(x * f, y * f)
+      a *= 0.5
+      f *= 2.07
     }
-    return arr
-  }, [radius, count])
+    return v
+  }
+  const col = new THREE.Color()
+  for (let py = 0; py < h; py++) {
+    const v = py / h
+    const ny = (v - 0.5) * 2
+    const band = Math.exp(-(ny * ny) / (2 * 0.3 * 0.3)) // galactic-plane concentration
+    for (let px = 0; px < w; px++) {
+      // Wrap longitude through cos/sin so there's no vertical seam.
+      const lon = (px / w) * Math.PI * 2
+      const cx = Math.cos(lon)
+      const cz = Math.sin(lon)
+      const cloud = fbm(cx * 3.0 + 5, v * 5.0 + cz * 3.0 + 10, 6)
+      const fine = fbm(cx * 9.0 + 50, v * 11.0 + cz * 9.0 + 90, 4)
+      let density = band * Math.pow(Math.max(0, cloud - 0.3) * 1.9, 1.3)
+      density *= 0.5 + 0.5 * fine
+      density = Math.min(1, density)
 
+      // Region colour from low-frequency noise → smooth patches of each hue.
+      const cn = fbm(cx * 1.4 + 200, v * 1.8 + cz * 1.4 + 300, 3)
+      const idx = Math.min(PALETTE.length - 1, Math.max(0, Math.floor(cn * PALETTE.length * 1.25)))
+      const p = PALETTE[idx]
+      col.setRGB(p[0], p[1], p[2])
+
+      const i4 = (py * w + px) * 4
+      d[i4] = col.r * 255
+      d[i4 + 1] = col.g * 255
+      d[i4 + 2] = col.b * 255
+      d[i4 + 3] = density * 105 // faint but visible
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+  const t = new THREE.CanvasTexture(canvas)
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+
+export default function Nebulosity({ radius = 82_000 }: { radius?: number }) {
+  const tex = useMemo(() => makeNebulaTexture(2048, 1024), [])
   return (
-    <group>
-      {clouds.map((c, i) => (
-        <sprite key={i} position={c.pos} scale={c.scale}>
-          <spriteMaterial
-            map={tex}
-            color={c.color}
-            rotation={c.rot}
-            transparent
-            opacity={c.opacity}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            toneMapped={false}
-          />
-        </sprite>
-      ))}
-    </group>
+    <mesh frustumCulled={false}>
+      <sphereGeometry args={[radius, 48, 32]} />
+      <meshBasicMaterial
+        map={tex}
+        side={THREE.BackSide}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </mesh>
   )
 }
