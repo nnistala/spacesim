@@ -14,6 +14,16 @@ html, body, #root {
   font-family: 'Exo 2', 'Orbitron', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* It's a flight sim — never let HUD/control text get selected on touch drag. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* …but real inputs (the search box) must still be selectable/editable. */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 :root {

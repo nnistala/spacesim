@@ -733,6 +733,23 @@ function buildCrabNebula(center: THREE.Vector3, radius: number, count: number) {
 // Cosmos
 // ---------------------------------------------------------------------------
 
+// Soft radial-gradient sprite used as a coloured glow halo behind nebulae, so
+// the clumpy emission points sit inside a luminous cloud (real nebulae glow).
+function makeGlowTexture(): THREE.Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = 128
+  const ctx = c.getContext('2d')!
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+  g.addColorStop(0, 'rgba(255,255,255,1)')
+  g.addColorStop(0.22, 'rgba(255,255,255,0.5)')
+  g.addColorStop(0.55, 'rgba(255,255,255,0.14)')
+  g.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, 128, 128)
+  return new THREE.CanvasTexture(c)
+}
+const GLOW_TEX = makeGlowTexture()
+
 export default function Cosmos() {
   const gl = useThree((s) => s.gl)
   const milkyWay = useMemo(() => buildMilkyWay(60_000), [])
@@ -774,6 +791,29 @@ export default function Cosmos() {
       }),
     [],
   )
+
+  // Coloured glow halos so nebulae read as luminous clouds, not bare points.
+  const nebulaGlows = useMemo(() => {
+    const glows = nebulae.map((n) => {
+      const a = n.def.palette[0]
+      const b = n.def.palette[Math.min(1, n.def.palette.length - 1)]
+      return {
+        key: `${n.def.id}-glow`,
+        pos: [n.center.x, n.center.y, n.center.z] as [number, number, number],
+        color: new THREE.Color((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2),
+        scale: n.def.radius * 3.0,
+        opacity: 0.5,
+      }
+    })
+    glows.push({
+      key: 'crab-glow',
+      pos: [crab.center.x, crab.center.y, crab.center.z],
+      color: new THREE.Color(0.5, 0.72, 1.0),
+      scale: CRAB.radius * 2.4,
+      opacity: 0.4,
+    })
+    return glows
+  }, [nebulae, crab])
 
   const mwMat = useMemo(() => pointsMaterial(1.2, 0.85), [])
   const kuiperMat = useMemo(() => pointsMaterial(1.4, 0.8), [])
@@ -871,6 +911,20 @@ export default function Cosmos() {
       {/* Named spiral galaxies you can fly to (Andromeda, Triangulum, …). */}
       {namedGalaxies.map((g) => (
         <points key={g.def.id} geometry={g.geo} material={galaxyDiskMat} frustumCulled={false} />
+      ))}
+      {/* Soft coloured glow halos behind the nebulae + Crab. */}
+      {nebulaGlows.map((g) => (
+        <sprite key={g.key} position={g.pos} scale={[g.scale, g.scale, 1]}>
+          <spriteMaterial
+            map={GLOW_TEX}
+            color={g.color}
+            transparent
+            opacity={g.opacity}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            toneMapped={false}
+          />
+        </sprite>
       ))}
       {/* JWST-style emission nebulae. */}
       {nebulae.map((n) => (

@@ -28,14 +28,16 @@ const GALACTIC_SIGMA = (20 * Math.PI) / 180; // 20 degrees
 /** Spectral type distribution (cumulative) — maps to colors.
  *  Real distribution: M ~76%, K ~12%, G ~8%, F ~3%, A+B+O ~1%
  *  We skew a bit brighter for visual appeal while staying realistic. */
+// More saturated than true blackbody so the field reads as a colourful deep
+// sky (the additive blend + bloom otherwise wash everything toward white).
 const SPECTRAL_CUMULATIVE = [
-  { cdf: 0.60, color: new THREE.Color(1.0, 0.7, 0.5) },    // M — red/orange
-  { cdf: 0.76, color: new THREE.Color(1.0, 0.82, 0.62) },   // K — orange
-  { cdf: 0.86, color: new THREE.Color(1.0, 0.96, 0.84) },   // G — yellow-white
-  { cdf: 0.93, color: new THREE.Color(0.97, 0.97, 1.0) },   // F — white
-  { cdf: 0.97, color: new THREE.Color(0.85, 0.9, 1.0) },    // A — blue-white
-  { cdf: 0.99, color: new THREE.Color(0.7, 0.8, 1.0) },     // B — blue
-  { cdf: 1.00, color: new THREE.Color(0.6, 0.7, 1.0) },     // O — deep blue
+  { cdf: 0.60, color: new THREE.Color(1.0, 0.52, 0.32) },   // M — red/orange
+  { cdf: 0.76, color: new THREE.Color(1.0, 0.68, 0.4) },    // K — orange
+  { cdf: 0.86, color: new THREE.Color(1.0, 0.9, 0.66) },    // G — yellow-white
+  { cdf: 0.93, color: new THREE.Color(0.92, 0.95, 1.0) },   // F — white
+  { cdf: 0.97, color: new THREE.Color(0.72, 0.84, 1.0) },   // A — blue-white
+  { cdf: 0.99, color: new THREE.Color(0.55, 0.72, 1.0) },   // B — blue
+  { cdf: 1.00, color: new THREE.Color(0.45, 0.62, 1.0) },   // O — deep blue
 ];
 
 // ---------------------------------------------------------------------------

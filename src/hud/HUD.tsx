@@ -1,8 +1,36 @@
+import { useState, useEffect } from 'react';
 import { useNavigationStore } from '../stores/navigationStore';
 import { useUIStore } from '../stores/uiStore';
 import { useProximityStore } from '../stores/proximityStore';
 import { formatRealDistance } from '../data/scaleConfig';
 import { xrStore } from '../stores/xrStore';
+
+/** Touch / small-screen devices: hide desktop-only chrome, shrink the HUD. */
+function useIsMobile() {
+  const compute = () =>
+    typeof window !== 'undefined' &&
+    (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 820);
+  const [mobile, setMobile] = useState(compute);
+  useEffect(() => {
+    const check = () => setMobile(compute());
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+  }, []);
+  return mobile;
+}
+
+const LABEL = {
+  fontSize: 10,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase' as const,
+  color: 'rgba(0, 136, 255, 0.8)',
+  marginBottom: 2,
+  fontFamily: "'Orbitron', monospace",
+};
 
 export default function HUD() {
   const displaySpeed = useNavigationStore((s) => s.displaySpeed);
@@ -10,6 +38,7 @@ export default function HUD() {
   const crosshairName = useNavigationStore((s) => s.crosshairName);
   const locationBreadcrumb = useUIStore((s) => s.locationBreadcrumb);
   const nearest = useProximityStore((s) => s.nearest);
+  const mobile = useIsMobile();
 
   return (
     <div
@@ -20,67 +49,52 @@ export default function HUD() {
         zIndex: 100,
         fontFamily: "'Exo 2', 'Orbitron', system-ui, sans-serif",
         color: 'rgba(255, 255, 255, 0.9)',
+        // Stop the HUD text (controls hint, readouts) from being selected when
+        // dragging the joystick / panning on touch.
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
       }}
     >
-      {/* Top-left: Location breadcrumb */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          left: 24,
-          background: 'rgba(0, 0, 0, 0.45)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(0, 136, 255, 0.2)',
-          borderRadius: 8,
-          padding: '8px 16px',
-        }}
-      >
+      {/* Top-left: Location breadcrumb — desktop only (declutters mobile top). */}
+      {!mobile && (
         <div
           style={{
-            fontSize: 10,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'rgba(0, 136, 255, 0.8)',
-            marginBottom: 2,
-            fontFamily: "'Orbitron', monospace",
+            position: 'absolute',
+            top: 20,
+            left: 24,
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(0, 136, 255, 0.2)',
+            borderRadius: 8,
+            padding: '8px 16px',
           }}
         >
-          Location
+          <div style={LABEL}>Location</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{locationBreadcrumb}</div>
         </div>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>
-          {locationBreadcrumb}
-        </div>
-      </div>
+      )}
 
       {/* Top-right: Speed indicator */}
       <div
         style={{
           position: 'absolute',
-          top: 20,
-          right: 24,
+          top: mobile ? 10 : 20,
+          right: mobile ? 12 : 24,
           background: 'rgba(0, 0, 0, 0.45)',
           backdropFilter: 'blur(8px)',
           border: '1px solid rgba(0, 136, 255, 0.2)',
           borderRadius: 8,
-          padding: '8px 16px',
+          padding: mobile ? '5px 10px' : '8px 16px',
           textAlign: 'right',
         }}
       >
-        <div
-          style={{
-            fontSize: 10,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'rgba(0, 136, 255, 0.8)',
-            marginBottom: 2,
-            fontFamily: "'Orbitron', monospace",
-          }}
-        >
+        <div style={{ ...LABEL, fontSize: mobile ? 8 : 10, marginBottom: mobile ? 1 : 2 }}>
           Speed
         </div>
         <div
           style={{
-            fontSize: 18,
+            fontSize: mobile ? 13 : 18,
             fontWeight: 700,
             fontFamily: "'Orbitron', monospace",
             letterSpacing: '0.05em',
@@ -88,7 +102,7 @@ export default function HUD() {
         >
           {displaySpeed || '0 m/s'}
         </div>
-        {warpProgress > 0.02 && (
+        {warpProgress > 0.02 && !mobile && (
           <div style={{ marginTop: 6 }}>
             <div
               style={{
@@ -125,38 +139,39 @@ export default function HUD() {
         )}
       </div>
 
-      {/* Top-center: Nearest body + real distance */}
+      {/* Top-left on mobile / top-center on desktop: Nearest body + distance */}
       {nearest && (
         <div
           style={{
             position: 'absolute',
-            top: 20,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            top: mobile ? 10 : 20,
+            left: mobile ? 12 : '50%',
+            transform: mobile ? 'none' : 'translateX(-50%)',
             background: 'rgba(0, 0, 0, 0.5)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(0, 136, 255, 0.3)',
             borderRadius: 8,
-            padding: '8px 20px',
-            textAlign: 'center',
-            minWidth: 200,
+            padding: mobile ? '5px 10px' : '8px 20px',
+            textAlign: mobile ? 'left' : 'center',
+            minWidth: mobile ? 0 : 200,
+            maxWidth: mobile ? '52vw' : undefined,
           }}
         >
           <div
             style={{
-              fontSize: 10,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'rgba(0, 136, 255, 0.8)',
-              marginBottom: 2,
-              fontFamily: "'Orbitron', monospace",
+              ...LABEL,
+              fontSize: mobile ? 8 : 10,
+              marginBottom: mobile ? 1 : 2,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             Nearest · {nearest.name}
           </div>
           <div
             style={{
-              fontSize: 16,
+              fontSize: mobile ? 13 : 16,
               fontWeight: 700,
               fontFamily: "'Orbitron', monospace",
               letterSpacing: '0.04em',
@@ -167,11 +182,12 @@ export default function HUD() {
         </div>
       )}
 
-      {/* Bottom-center: Control buttons */}
+      {/* Bottom-center: Control buttons (VR hidden on mobile — WebXR VR is
+          desktop/headset only). Smaller on mobile. */}
       <div
         style={{
           position: 'absolute',
-          bottom: 24,
+          bottom: mobile ? 14 : 24,
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
@@ -182,22 +198,22 @@ export default function HUD() {
         {[
           { label: 'SEARCH', icon: '🔍', onClick: () => useUIStore.getState().toggleSearch() },
           { label: 'TIME', icon: '⏱', onClick: () => useUIStore.getState().toggleTime() },
-          { label: 'VR', icon: '🥽', onClick: () => xrStore.enterVR() },
+          ...(mobile ? [] : [{ label: 'VR', icon: '🥽', onClick: () => xrStore.enterVR() }]),
         ].map(({ label, icon, onClick }) => (
           <button
             key={label}
             onClick={(e) => {
-              onClick()
-              e.currentTarget.blur()
+              onClick();
+              e.currentTarget.blur();
             }}
             style={{
               background: 'rgba(0, 0, 0, 0.5)',
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(0, 136, 255, 0.3)',
               borderRadius: 8,
-              padding: '8px 14px',
+              padding: mobile ? '6px 10px' : '8px 14px',
               color: 'rgba(255, 255, 255, 0.85)',
-              fontSize: 11,
+              fontSize: mobile ? 9 : 11,
               fontFamily: "'Orbitron', monospace",
               letterSpacing: '0.1em',
               cursor: 'pointer',
@@ -206,7 +222,7 @@ export default function HUD() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
-              minWidth: 56,
+              minWidth: mobile ? 44 : 56,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'rgba(0, 136, 255, 0.7)';
@@ -217,29 +233,31 @@ export default function HUD() {
               e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
             }}
           >
-            <span style={{ fontSize: 16 }}>{icon}</span>
+            <span style={{ fontSize: mobile ? 13 : 16 }}>{icon}</span>
             <span>{label}</span>
           </button>
         ))}
       </div>
 
-      {/* Bottom-left: Controls hint */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 24,
-          left: 24,
-          fontSize: 11,
-          color: 'rgba(255, 255, 255, 0.35)',
-          lineHeight: 1.6,
-        }}
-      >
-        <div>WASD — Move</div>
-        <div>Mouse — Look</div>
-        <div>Scroll — Speed</div>
-        <div>Shift — Boost</div>
-        <div>Click — Lock cursor</div>
-      </div>
+      {/* Bottom-left: Controls hint — desktop only (irrelevant + selectable on touch). */}
+      {!mobile && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 24,
+            left: 24,
+            fontSize: 11,
+            color: 'rgba(255, 255, 255, 0.35)',
+            lineHeight: 1.6,
+          }}
+        >
+          <div>WASD — Move</div>
+          <div>Mouse — Look</div>
+          <div>Scroll — Speed</div>
+          <div>Shift — Boost</div>
+          <div>Click — Lock cursor</div>
+        </div>
+      )}
 
       {/* Crosshair / targeting scope — turns amber and names the locked body. */}
       {(() => {

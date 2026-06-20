@@ -36,8 +36,10 @@ function SolarSystemScene() {
       <Meteors />
       <SpaceObjects />
       <SpaceObjectModels />
-      {/* Nearby resolved stars, sitting in the stellar shell beyond the planets. */}
-      <StarField radius={85_000} />
+      {/* Nearby resolved stars, sitting in the stellar shell beyond the planets.
+          Fewer background stars so space reads as a colourful deep field rather
+          than a dense wall of white dots. */}
+      <StarField radius={85_000} backgroundCount={55_000} />
       {/* Our nearest neighbour — a real, fly-to-able triple-star system. */}
       <AlphaCentauri />
       {/* Everything beyond — Oort, Milky Way, cosmic web, observable edge. */}

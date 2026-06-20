@@ -1,4 +1,5 @@
-import { useMemo, useEffect } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useTexture, Line } from '@react-three/drei'
 
@@ -143,8 +144,21 @@ function OrbitingPlanet({ planet, date }: { planet: PlanetData; date: Date }) {
 
 function OrbitLine({ planet }: { planet: PlanetData }) {
   const points = useMemo(() => orbitPoints(planet), [planet])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ref = useRef<any>(null)
+
+  // Fade the orbit rings out once the camera is far from the Sun, so from across
+  // the galaxy the solar system doesn't read as a tiny ringed "Saturn" disc.
+  useFrame(({ camera }) => {
+    const mat = ref.current?.material
+    if (!mat) return
+    const d = camera.position.length() // distance from the Sun (origin)
+    mat.opacity = 0.12 * THREE.MathUtils.clamp(1 - (d - 22000) / 23000, 0, 1)
+  })
+
   return (
     <Line
+      ref={ref}
       points={points}
       color="#4488cc"
       transparent
