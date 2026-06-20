@@ -176,7 +176,7 @@ const WORMHOLE_FRAG = /* glsl */ `
     if (dot(rd, rd) < 0.0001) rd = reflect(V, N);
     float fres = pow(1.0 - abs(dot(N, V)), 2.5);
     // Swirl around the view axis
-    float a = (0.4 + fres) * 1.6 + uTime * 0.05;
+    float a = (0.4 + fres) * 1.6 + uTime * 0.5;
     float cs = cos(a), sn = sin(a);
     rd.xy = mat2(cs, -sn, sn, cs) * rd.xy;
 
