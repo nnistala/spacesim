@@ -446,6 +446,11 @@ const NEBULAE: NebulaDef[] = [
     id: 'lagoon', name: 'Lagoon Nebula', distanceLy: 4100, dir: [0.0151, -0.4131, -0.9111], radius: 2000,
     palette: [[1.0, 0.38, 0.5], [1.0, 0.55, 0.62], [0.9, 0.45, 0.68], [0.6, 0.72, 1.0], [1.0, 0.72, 0.5]],
   },
+  {
+    // M45 — Pleiades: blue reflection nebula around hot young stars.
+    id: 'pleiades', name: 'Pleiades', distanceLy: 440, dir: [0.5002, 0.4088, 0.7633], radius: 900,
+    palette: [[0.6, 0.78, 1.0], [0.75, 0.88, 1.0], [0.5, 0.68, 1.0], [0.85, 0.92, 1.0], [0.65, 0.8, 1.0]],
+  },
 ]
 
 // Build a clumpy, colourful emission cloud as galaxy-shader points.
