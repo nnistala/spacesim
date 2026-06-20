@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
@@ -6,16 +6,26 @@ import * as THREE from 'three'
 import { ORBITERS, SURFACE_OBJECTS, MODEL_RADII } from '../data/spaceObjects'
 import { proximityBodies } from '../stores/proximityStore'
 
-// Real public-domain NASA 3D models (nasa/NASA-3D-Resources). Curiosity reuses
-// the Perseverance model — near-identical rover design (no clean GLB exists).
-const GLB = {
-  iss: `${import.meta.env.BASE_URL}models/iss.glb`,
-  hubble: `${import.meta.env.BASE_URL}models/hubble.glb`,
-  rover: `${import.meta.env.BASE_URL}models/perseverance.glb`,
+// Real public-domain NASA 3D models (nasa/NASA-3D-Resources), keyed by object id.
+// Curiosity reuses the Perseverance model (near-identical rover; only a .blend
+// exists for Curiosity). NOT preloaded — each loads lazily as you approach (see
+// GLB_MOUNT_*) so the ~21 MB of models never hit the initial page load.
+const assetUrl = (f: string) => `${import.meta.env.BASE_URL}models/${f}`
+const ROVER_ROT: [number, number, number] = [-Math.PI / 2, 0, 0] // GLB is Z-up
+const GLB_BY_ID: Record<string, { url: string; rot?: [number, number, number] }> = {
+  iss: { url: assetUrl('iss.glb') },
+  hubble: { url: assetUrl('hubble.glb') },
+  lro: { url: assetUrl('lro.glb') },
+  mro: { url: assetUrl('mro.glb') },
+  maven: { url: assetUrl('maven.glb') },
+  goes16: { url: assetUrl('goes.glb') },
+  perseverance: { url: assetUrl('perseverance.glb'), rot: ROVER_ROT },
+  curiosity: { url: assetUrl('perseverance.glb'), rot: ROVER_ROT },
 }
-useGLTF.preload(GLB.iss)
-useGLTF.preload(GLB.hubble)
-useGLTF.preload(GLB.rover)
+
+/** Camera distance (× model radius) to start / stop loading the GLB (hysteresis). */
+const GLB_MOUNT_IN = 600
+const GLB_MOUNT_OUT = 1100
 
 /**
  * Load a GLB and normalize it to a unit bounding sphere centred at the origin,
@@ -368,34 +378,17 @@ interface Item {
   kind: keyof typeof MODEL_RADII
   parent: string
   radius: number
-  model: React.ReactNode
+  /** Cheap procedural shape — always available; the GLB's loading fallback too. */
+  procedural: React.ReactNode
+  /** Real NASA GLB (if one exists for this object). */
+  glb?: { url: string; rot?: [number, number, number] }
 }
 
-function modelFor(id: string, kind: Item['kind']): React.ReactNode {
-  // Real NASA GLB models for the iconic craft, with the procedural shapes as
-  // the loading fallback (so they still appear instantly, then sharpen).
-  if (id === 'iss') {
-    return (
-      <Suspense fallback={<ISSModel />}>
-        <GltfModel url={GLB.iss} />
-      </Suspense>
-    )
-  }
-  if (id === 'hubble') {
-    return (
-      <Suspense fallback={<HubbleModel />}>
-        <GltfModel url={GLB.hubble} />
-      </Suspense>
-    )
-  }
-  if (kind === 'rover') {
-    return (
-      <Suspense fallback={<RoverModel />}>
-        {/* GLB is Z-up → stand it on +Y (radial-out) like the procedural rover. */}
-        <GltfModel url={GLB.rover} rot={[-Math.PI / 2, 0, 0]} />
-      </Suspense>
-    )
-  }
+/** The procedural shape for an object (used far away + while a GLB loads). */
+function proceduralFor(id: string, kind: Item['kind']): React.ReactNode {
+  if (id === 'iss') return <ISSModel />
+  if (id === 'hubble') return <HubbleModel />
+  if (kind === 'rover') return <RoverModel />
   if (id === 'tiangong') return <TiangongModel />
   if (kind === 'flag') return <FlagModel />
   return <SatelliteModel />
@@ -406,22 +399,20 @@ export default function SpaceObjectModels() {
   const groupsRef = useRef<(THREE.Group | null)[]>([])
 
   const items = useMemo<Item[]>(() => {
-    const orbiters: Item[] = ORBITERS.map((o) => ({
+    const mk = (o: { id: string; kind: keyof typeof MODEL_RADII; parent: string }): Item => ({
       id: o.id,
       kind: o.kind,
       parent: o.parent,
       radius: MODEL_RADII[o.kind],
-      model: modelFor(o.id, o.kind),
-    }))
-    const surface: Item[] = SURFACE_OBJECTS.map((s) => ({
-      id: s.id,
-      kind: s.kind,
-      parent: s.parent,
-      radius: MODEL_RADII[s.kind],
-      model: modelFor(s.id, s.kind),
-    }))
-    return [...orbiters, ...surface]
+      procedural: proceduralFor(o.id, o.kind),
+      glb: GLB_BY_ID[o.id],
+    })
+    return [...ORBITERS.map(mk), ...SURFACE_OBJECTS.map(mk)]
   }, [])
+
+  // Which GLB models are currently loaded (mounted near the camera).
+  const [activeIds, setActiveIds] = useState<Set<string>>(() => new Set())
+  const activeRef = useRef<Set<string>>(new Set())
 
   // Scratch
   const _pos = useRef(new THREE.Vector3())
@@ -429,6 +420,7 @@ export default function SpaceObjectModels() {
   const _quat = useRef(new THREE.Quaternion())
 
   useFrame(() => {
+    let activeChanged = false
     for (let idx = 0; idx < items.length; idx++) {
       const g = groupsRef.current[idx]
       if (!g) continue
@@ -446,6 +438,19 @@ export default function SpaceObjectModels() {
       }
       const pos = _pos.current.set(p[0], p[1], p[2])
       const dist = camera.position.distanceTo(pos)
+
+      // Lazily mount / unmount the heavy GLB as the camera approaches / leaves.
+      if (it.glb) {
+        const loaded = activeRef.current.has(it.id)
+        if (!loaded && dist < it.radius * GLB_MOUNT_IN) {
+          activeRef.current.add(it.id)
+          activeChanged = true
+        } else if (loaded && dist > it.radius * GLB_MOUNT_OUT) {
+          activeRef.current.delete(it.id)
+          activeChanged = true
+        }
+      }
+
       const show = dist < it.radius * SHOW_FACTOR
       g.visible = show
       if (!show) continue
@@ -464,6 +469,7 @@ export default function SpaceObjectModels() {
         }
       }
     }
+    if (activeChanged) setActiveIds(new Set(activeRef.current))
   })
 
   return (
@@ -472,16 +478,25 @@ export default function SpaceObjectModels() {
           models are lit from the Sun correctly at any heliocentric distance — a
           normal point light's 1/d² would leave them black out by the planets. */}
       <pointLight position={[0, 0, 0]} intensity={3} decay={0} color="#fff6ec" />
-      {items.map((it, idx) => (
-        <group
-          key={it.id}
-          ref={(el) => (groupsRef.current[idx] = el)}
-          scale={it.radius}
-          visible={false}
-        >
-          {it.model}
-        </group>
-      ))}
+      {items.map((it, idx) => {
+        const useGlb = it.glb && activeIds.has(it.id)
+        return (
+          <group
+            key={it.id}
+            ref={(el) => (groupsRef.current[idx] = el)}
+            scale={it.radius}
+            visible={false}
+          >
+            {useGlb ? (
+              <Suspense fallback={it.procedural}>
+                <GltfModel url={it.glb!.url} rot={it.glb!.rot} />
+              </Suspense>
+            ) : (
+              it.procedural
+            )}
+          </group>
+        )
+      })}
     </>
   )
 }
