@@ -28,7 +28,7 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 
 - **The Solar System, to scale** — the Sun (white G2V blackbody with constantly erupting flares & prominences), all eight planets at true relative size on real elliptical orbits, Saturn's rings, and procedural NASA-derived textures.
 - **18 natural satellites** — the Galilean moons of Jupiter, Titan and friends at Saturn, the moons of Mars, Uranus and Neptune (including retrograde Triton), each correctly sun-lit with real orbital-period ratios.
-- **Human-made objects** — fly up to detailed models of the ISS, Tiangong, Hubble, GPS/weather satellites, the Mars rovers (Perseverance, Curiosity), and the Apollo flags.
+- **Human-made objects** — fly up to **real public-domain NASA 3D models** of the ISS, Hubble, the Mars rovers (Perseverance, Curiosity), LRO, MRO, MAVEN and GOES, plus Tiangong, GPS and the Apollo flags.
 - **Minor bodies** — the asteroid belt, comets with ion + dust tails, and shooting-star meteors streaking across the sky.
 - **Deep sky** — our nearest neighbour **Alpha Centauri** (a real triple-star system), the **Milky Way**, the **Andromeda**, **Triangulum**, **Whirlpool** and edge-on **Sombrero** galaxies, the **Crab Nebula** supernova remnant, the **Carina** and **Orion** nebulae, the **Local Group**, the **Virgo Cluster**, and the cosmic web out to the observable edge.
 - **Targeting scope** — a reticle that locks onto and names whatever body is in your sights.
@@ -40,9 +40,9 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 
 | | |
 |---|---|
-| ![Crab Nebula](docs/screenshots/crab-nebula.png) **Crab Nebula (M1)** — supernova remnant, Hubble palette | ![Alpha Centauri](docs/screenshots/alpha-centauri.png) **Alpha Centauri** — our nearest stellar neighbours |
-| ![Sombrero](docs/screenshots/sombrero-galaxy.png) **Sombrero Galaxy (M104)** — edge-on disc + dust lane | ![ISS](docs/screenshots/iss.png) **ISS** — fly right up to it |
-| ![Sun](docs/screenshots/sun.png) **The Sun** — white-hot, with flares & prominences | ![Targeting scope](docs/screenshots/targeting-scope.png) **Targeting scope** — names what you look at |
+| ![Crab Nebula](docs/screenshots/crab-nebula.png) **Crab Nebula (M1)** — supernova remnant, Hubble palette | ![Alpha Centauri](docs/screenshots/alpha-centauri.png) **Alpha Centauri** — our nearest stellar neighbours (real triple system) |
+| ![Whirlpool Galaxy](docs/screenshots/whirlpool-galaxy.png) **Whirlpool Galaxy (M51)** — a grand-design spiral you can fly to | ![ISS](docs/screenshots/iss.png) **ISS** — the real NASA 3D model, up close |
+| ![Sun](docs/screenshots/sun.png) **The Sun** — white-hot G2V, with erupting flares | ![Targeting scope](docs/screenshots/targeting-scope.png) **Targeting scope** — names what you look at; double-click to fly there |
 
 ## 🔬 Scientific accuracy
 
