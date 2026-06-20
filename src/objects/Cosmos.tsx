@@ -436,6 +436,16 @@ const NEBULAE: NebulaDef[] = [
     id: 'orion', name: 'Orion Nebula', distanceLy: 1340, dir: [-0.3, -0.15, 0.94], radius: 1700,
     palette: [[1.0, 0.45, 0.5], [0.95, 0.55, 0.75], [0.5, 0.8, 1.0], [0.7, 0.9, 0.85], [1.0, 0.8, 0.55]],
   },
+  {
+    // M16 — Pillars of Creation: golden dust pillars + teal + pink star-forming gas.
+    id: 'eagle', name: 'Eagle Nebula', distanceLy: 7000, dir: [0.0795, -0.2385, -0.9679], radius: 2200,
+    palette: [[1.0, 0.62, 0.34], [0.95, 0.8, 0.5], [0.55, 0.85, 0.75], [0.55, 0.45, 0.78], [1.0, 0.5, 0.55]],
+  },
+  {
+    // M8 — Lagoon: hydrogen-α pink/red emission with a blue-white core cluster.
+    id: 'lagoon', name: 'Lagoon Nebula', distanceLy: 4100, dir: [0.0151, -0.4131, -0.9111], radius: 2000,
+    palette: [[1.0, 0.38, 0.5], [1.0, 0.55, 0.62], [0.9, 0.45, 0.68], [0.6, 0.72, 1.0], [1.0, 0.72, 0.5]],
+  },
 ]
 
 // Build a clumpy, colourful emission cloud as galaxy-shader points.
@@ -730,6 +740,83 @@ function buildCrabNebula(center: THREE.Vector3, radius: number, count: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Planetary nebulae — glowing shells cast off by dying stars (Ring, Helix)
+// ---------------------------------------------------------------------------
+// An expanding shell of gas with a central white-dwarf. Rendered as a thick
+// spherical shell of points: seen from any angle the denser limb reads as the
+// classic bright "ring", with a teal-ish interior and red/pink outer rim.
+interface PlanetaryDef {
+  id: string
+  name: string
+  distanceLy: number
+  dir: [number, number, number]
+  radius: number
+  tilt: [number, number, number]
+  inner: [number, number, number]
+  outer: [number, number, number]
+  core: [number, number, number]
+}
+
+const PLANETARY: PlanetaryDef[] = [
+  {
+    id: 'ring-nebula', name: 'Ring Nebula', distanceLy: 2570, dir: [0.1943, 0.5446, -0.8159],
+    radius: 850, tilt: [0.6, 0, 0.35],
+    inner: [0.4, 0.85, 0.78], outer: [1.0, 0.42, 0.42], core: [0.75, 0.85, 1.0],
+  },
+  {
+    id: 'helix-nebula', name: 'Helix Nebula', distanceLy: 650, dir: [0.8636, -0.3551, -0.3595],
+    radius: 1200, tilt: [1.0, 0, 0.2],
+    inner: [0.5, 0.85, 0.82], outer: [1.0, 0.46, 0.4], core: [0.6, 0.8, 1.0],
+  },
+]
+
+function buildPlanetaryNebula(def: PlanetaryDef, center: THREE.Vector3) {
+  const count = 6500
+  const positions = new Float32Array(count * 3)
+  const colors = new Float32Array(count * 3)
+  const sizes = new Float32Array(count)
+  const angles = new Float32Array(count)
+  const shapes = new Float32Array(count)
+  const rot = new THREE.Matrix4().makeRotationFromEuler(
+    new THREE.Euler(def.tilt[0], def.tilt[1], def.tilt[2]),
+  )
+  const inner = new THREE.Color(...def.inner)
+  const outer = new THREE.Color(...def.outer)
+  const v = new THREE.Vector3()
+  const c = new THREE.Color()
+  for (let i = 0; i < count; i++) {
+    const u = Math.random() * 2 - 1
+    const th = Math.random() * Math.PI * 2
+    const s = Math.sqrt(1 - u * u)
+    const r = def.radius * (0.8 + Math.abs(gaussian(0.1)))
+    v.set(s * Math.cos(th) * r, u * r * 0.85, s * Math.sin(th) * r).applyMatrix4(rot)
+    positions[i * 3] = center.x + v.x
+    positions[i * 3 + 1] = center.y + v.y
+    positions[i * 3 + 2] = center.z + v.z
+    // Teal interior gas → red/pink outer rim; occasional bright Hα knots.
+    c.copy(inner).lerp(outer, Math.random())
+    if (Math.random() < 0.12) c.setRGB(1.0, 0.4, 0.55)
+    const b = 0.4 + Math.random() * 0.4
+    colors[i * 3] = c.r * b
+    colors[i * 3 + 1] = c.g * b
+    colors[i * 3 + 2] = c.b * b
+    sizes[i] = 3 + Math.random() * 5
+    angles[i] = Math.random() * Math.PI * 2
+    shapes[i] = 0.35 + Math.random() * 0.4
+  }
+  // Central white dwarf.
+  positions[0] = center.x
+  positions[1] = center.y
+  positions[2] = center.z
+  colors[0] = def.core[0] * 0.9
+  colors[1] = def.core[1] * 0.9
+  colors[2] = def.core[2]
+  sizes[0] = 9
+  shapes[0] = 0
+  return galaxyShaderGeometry(positions, colors, sizes, angles, shapes)
+}
+
+// ---------------------------------------------------------------------------
 // Cosmos
 // ---------------------------------------------------------------------------
 
@@ -792,6 +879,15 @@ export default function Cosmos() {
       }),
     [],
   )
+  // Planetary nebulae (Ring, Helix) — glowing shells round dying stars.
+  const planetaries = useMemo(
+    () =>
+      PLANETARY.map((p) => {
+        const center = new THREE.Vector3(...p.dir).normalize().multiplyScalar(lyToRenderUnits(p.distanceLy))
+        return { def: p, center, geo: buildPlanetaryNebula(p, center) }
+      }),
+    [],
+  )
 
   // Coloured glow halos so nebulae read as luminous clouds, not bare points.
   const nebulaGlows = useMemo(() => {
@@ -806,10 +902,22 @@ export default function Cosmos() {
         opacity: 0.85,
       }
     })
+    // Planetary nebulae get a soft halo tinted toward their outer rim colour.
+    for (const p of planetaries) {
+      const o = p.def.outer
+      const inn = p.def.inner
+      glows.push({
+        key: `${p.def.id}-glow`,
+        pos: [p.center.x, p.center.y, p.center.z] as [number, number, number],
+        color: new THREE.Color((o[0] + inn[0]) / 2, (o[1] + inn[1]) / 2, (o[2] + inn[2]) / 2),
+        scale: p.def.radius * 3.0,
+        opacity: 0.6,
+      })
+    }
     // NB: the Crab gets NO glow halo — its dense filaments are already bright,
     // and a halo turned it into a blinding "flashlight" blob.
     return glows
-  }, [nebulae])
+  }, [nebulae, planetaries])
 
   const mwMat = useMemo(() => pointsMaterial(1.2, 0.85), [])
   const kuiperMat = useMemo(() => pointsMaterial(1.4, 0.8), [])
@@ -880,6 +988,16 @@ export default function Cosmos() {
         labelRange: n.def.radius * 8,
       })
     }
+    for (const p of planetaries) {
+      store.registerBody({
+        id: p.def.id,
+        name: p.def.name,
+        position: [p.center.x, p.center.y, p.center.z],
+        radius: p.def.radius,
+        kind: 'structure',
+        labelRange: p.def.radius * 9,
+      })
+    }
     // Virgo Cluster — a discrete structure at its real sky position.
     store.registerBody({
       id: 'virgo-cluster',
@@ -902,10 +1020,11 @@ export default function Cosmos() {
       for (const s of COSMIC_SHELLS) store.unregisterBody(s.id)
       for (const g of namedGalaxies) store.unregisterBody(g.def.id)
       for (const n of nebulae) store.unregisterBody(n.def.id)
+      for (const p of planetaries) store.unregisterBody(p.def.id)
       store.unregisterBody('virgo-cluster')
       store.unregisterBody('crab-nebula')
     }
-  }, [namedGalaxies, nebulae, virgo, crab])
+  }, [namedGalaxies, nebulae, planetaries, virgo, crab])
 
   return (
     <group>
@@ -952,6 +1071,10 @@ export default function Cosmos() {
       {/* JWST-style emission nebulae. */}
       {nebulae.map((n) => (
         <points key={n.def.id} geometry={n.geo} material={galaxyMat} frustumCulled={false} />
+      ))}
+      {/* Planetary nebulae (Ring, Helix). */}
+      {planetaries.map((p) => (
+        <points key={p.def.id} geometry={p.geo} material={galaxyMat} frustumCulled={false} />
       ))}
     </group>
   )
