@@ -135,7 +135,9 @@ export default function SpaceObjects() {
       const dx = cl * Math.cos(lon)
       const dy = Math.sin(lat)
       const dz = cl * Math.sin(lon)
-      const rr = parent.radius * 1.003
+      // Exactly on the surface — the 3D models are anchored at their base so
+      // they SIT on it (a lift here left them hovering above the surface).
+      const rr = parent.radius
       write(s.id, parent.position[0] + dx * rr, parent.position[1] + dy * rr, parent.position[2] + dz * rr)
     }
 

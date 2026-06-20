@@ -32,7 +32,15 @@ const GLB_MOUNT_OUT = 1100
  * so the manager's per-kind scale (MODEL_RADII) sizes it consistently with the
  * procedural fallbacks. `rot` corrects each model's native up-axis.
  */
-function GltfModel({ url, rot }: { url: string; rot?: [number, number, number] }) {
+function GltfModel({
+  url,
+  rot,
+  anchorBottom,
+}: {
+  url: string
+  rot?: [number, number, number]
+  anchorBottom?: boolean
+}) {
   const { scene } = useGLTF(url)
   const node = useMemo(() => {
     const c = scene.clone(true)
@@ -43,8 +51,15 @@ function GltfModel({ url, rot }: { url: string; rot?: [number, number, number] }
     const g = new THREE.Group()
     if (rot) g.rotation.set(rot[0], rot[1], rot[2])
     g.add(c)
+    if (anchorBottom) {
+      // Drop the model's lowest point to the origin so it SITS on the surface
+      // (surface objects sit; orbiters stay centred and float).
+      g.updateMatrixWorld(true)
+      const minY = new THREE.Box3().setFromObject(g).min.y
+      g.position.y -= minY
+    }
     return g
-  }, [scene, rot])
+  }, [scene, rot, anchorBottom])
   return <primitive object={node} />
 }
 
@@ -489,7 +504,11 @@ export default function SpaceObjectModels() {
           >
             {useGlb ? (
               <Suspense fallback={it.procedural}>
-                <GltfModel url={it.glb!.url} rot={it.glb!.rot} />
+                <GltfModel
+                  url={it.glb!.url}
+                  rot={it.glb!.rot}
+                  anchorBottom={it.kind === 'rover' || it.kind === 'flag'}
+                />
               </Suspense>
             ) : (
               it.procedural
