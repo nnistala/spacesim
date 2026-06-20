@@ -13,7 +13,9 @@ import { useProximityStore } from '../stores/proximityStore'
 // where Interstellar's wormhole sat.
 // ===========================================================================
 
-const POSITION = new THREE.Vector3(0.62, 0.16, 0.77).normalize().multiplyScalar(auToRenderUnits(9.2))
+// A clear, empty patch of sky below the ecliptic — well away from the named
+// galaxies/nebulae lines of sight (no overlap from the inner solar system).
+const POSITION = new THREE.Vector3(0.45, -0.78, 0.43).normalize().multiplyScalar(auToRenderUnits(9.2))
 const RADIUS = 220
 
 const VERT = /* glsl */ `

@@ -304,7 +304,7 @@ interface NamedGalaxy {
 }
 
 const NAMED_GALAXIES: NamedGalaxy[] = [
-  { id: 'andromeda', name: 'Andromeda Galaxy', distanceLy: 2.5e6, dir: [0.5, 0.45, 0.74], radius: 9000, tilt: [1.15, 0.2, 0.0], arms: 2, bulge: [1.0, 0.9, 0.72], arm: [0.72, 0.82, 1.0] },
+  { id: 'andromeda', name: 'Andromeda Galaxy', distanceLy: 2.5e6, dir: [0.739, 0.66, 0.139], radius: 9000, tilt: [1.15, 0.2, 0.0], arms: 2, bulge: [1.0, 0.9, 0.72], arm: [0.72, 0.82, 1.0] },
   { id: 'triangulum', name: 'Triangulum Galaxy', distanceLy: 2.9e6, dir: [-0.55, -0.28, 0.79], radius: 5500, tilt: [0.6, 0.0, 0.7], arms: 3, bulge: [1.0, 0.92, 0.78], arm: [0.78, 0.85, 1.0] },
   { id: 'whirlpool', name: 'Whirlpool Galaxy', distanceLy: 2.3e7, dir: [0.34, 0.62, -0.71], radius: 7000, tilt: [0.25, 0.0, 0.1], arms: 2, bulge: [1.0, 0.88, 0.66], arm: [0.7, 0.8, 1.0] },
   { id: 'sombrero', name: 'Sombrero Galaxy', distanceLy: 2.9e7, dir: [-0.7, 0.15, -0.7], radius: 6000, tilt: [1.45, 0.0, 0.2], arms: 2, bulge: [1.0, 0.93, 0.78], arm: [0.85, 0.8, 0.7] },
