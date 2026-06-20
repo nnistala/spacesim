@@ -17,6 +17,7 @@ import SpaceObjects from './objects/SpaceObjects'
 import SpaceObjectModels from './objects/SpaceObjectModels'
 import StarField from './objects/StarField'
 import AlphaCentauri from './objects/AlphaCentauri'
+import BlackHole from './objects/BlackHole'
 import Cosmos from './objects/Cosmos'
 import SpaceNavigator from './controls/SpaceNavigator'
 import Joystick from './controls/Joystick'
@@ -42,6 +43,8 @@ function SolarSystemScene() {
       <StarField radius={85_000} backgroundCount={55_000} />
       {/* Our nearest neighbour — a real, fly-to-able triple-star system. */}
       <AlphaCentauri />
+      {/* A stellar-mass black hole with accretion disk + jets. */}
+      <BlackHole />
       {/* Everything beyond — Oort, Milky Way, cosmic web, observable edge. */}
       <Cosmos />
     </>
