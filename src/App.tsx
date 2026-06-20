@@ -16,6 +16,7 @@ import Meteors from './objects/Meteor'
 import SpaceObjects from './objects/SpaceObjects'
 import SpaceObjectModels from './objects/SpaceObjectModels'
 import StarField from './objects/StarField'
+import Nebulosity from './objects/Nebulosity'
 import AlphaCentauri from './objects/AlphaCentauri'
 import Cosmos from './objects/Cosmos'
 import SpaceNavigator from './controls/SpaceNavigator'
@@ -40,6 +41,8 @@ function SolarSystemScene() {
           Fewer background stars so space reads as a colourful deep field rather
           than a dense wall of white dots. */}
       <StarField radius={85_000} backgroundCount={55_000} />
+      {/* Diffuse pink/purple/cyan/gold gas clouds — the colourful Chandra look. */}
+      <Nebulosity radius={80_000} count={60} />
       {/* Our nearest neighbour — a real, fly-to-able triple-star system. */}
       <AlphaCentauri />
       {/* Everything beyond — Oort, Milky Way, cosmic web, observable edge. */}
