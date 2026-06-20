@@ -6,74 +6,111 @@ import { lyToRenderUnits } from '../data/cosmicScale'
 import { useProximityStore } from '../stores/proximityStore'
 
 // ===========================================================================
-// BLACK HOLE — a stellar-mass black hole (Cygnus X-1) with a blazing accretion
-// disk and relativistic jets. Beautiful and genuinely menacing.
+// BLACK HOLE — Interstellar "Gargantua" style.
 // ---------------------------------------------------------------------------
-// Event horizon: a pure-black sphere that occludes everything behind it.
-// Accretion disk: a hot, rotating ring of plasma — white-blue (hottest) inner →
-// orange → red outer. Photon ring: a thin searing rim hugging the horizon.
-// Jets: twin blue-white beams along the spin axis. Real sky direction
-// (Cygnus X-1, RA 19h58m, Dec +35.2°, ~7000 ly).
+// A pitch-black event-horizon sphere, a hot rotating accretion disk (smooth
+// shader, white-hot inner → orange → red outer, with turbulence + Doppler
+// beaming), and a camera-facing halo that supplies the searing photon ring and
+// the lensed glow arcing around the shadow. Cygnus X-1 sky direction.
 // ===========================================================================
 
 const DIR: [number, number, number] = [0.4049, 0.5764, -0.7098]
 const DISTANCE_LY = 7000
-const HORIZON = 42
-const DISK_INNER = 56
-const DISK_OUTER = 190
-const TILT: [number, number, number] = [1.15, 0.4, 0.0]
+const RS = 40 // event-horizon radius
+const DISK_INNER = RS * 1.6
+const DISK_OUTER = RS * 5.5
+const TILT: [number, number, number] = [1.32, 0.5, 0.0] // near edge-on, dramatic
 
-function gaussian(sigma: number): number {
-  let u = 0
-  let v = 0
-  while (u === 0) u = Math.random()
-  while (v === 0) v = Math.random()
-  return sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
-}
+const NOISE = /* glsl */ `
+  float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
+  float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+    float a=hash(i), b=hash(i+vec2(1,0)), c=hash(i+vec2(0,1)), d=hash(i+vec2(1,1));
+    return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }
+  float fbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.13; a*=0.5; } return v; }
+`
 
-// Hot accretion-disk plasma: white-blue (inner, hottest) → orange → deep red.
-const HOT = new THREE.Color(0.8, 0.9, 1.0)
-const MID = new THREE.Color(1.0, 0.82, 0.45)
-const COOL = new THREE.Color(1.0, 0.36, 0.16)
-
-function buildDisk(count: number): THREE.BufferGeometry {
-  const positions = new Float32Array(count * 3)
-  const colors = new Float32Array(count * 3)
-  const c = new THREE.Color()
-  for (let i = 0; i < count; i++) {
-    const t = Math.pow(Math.random(), 0.6) // denser toward the inner edge
-    const r = DISK_INNER + t * (DISK_OUTER - DISK_INNER)
-    const ang = Math.random() * Math.PI * 2
-    positions[i * 3] = Math.cos(ang) * r
-    positions[i * 3 + 1] = gaussian(2.2 + t * 4) // thin, flaring outward
-    positions[i * 3 + 2] = Math.sin(ang) * r
-    if (t < 0.5) c.copy(HOT).lerp(MID, t / 0.5)
-    else c.copy(MID).lerp(COOL, (t - 0.5) / 0.5)
-    const b = (1.0 - t * 0.5) * (0.6 + Math.random() * 0.4) // inner brighter
-    colors[i * 3] = c.r * b
-    colors[i * 3 + 1] = c.g * b
-    colors[i * 3 + 2] = c.b * b
+// ---- Flat accretion disk (RingGeometry in its own plane) -------------------
+const DISK_VERT = /* glsl */ `
+  varying vec2 vL;
+  void main(){ vL = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+`
+const DISK_FRAG = /* glsl */ `
+  precision highp float;
+  varying vec2 vL;
+  uniform float uTime; uniform float uInner; uniform float uOuter;
+  ${NOISE}
+  void main(){
+    float r = length(vL);
+    float t = clamp((r - uInner)/(uOuter - uInner), 0.0, 1.0);
+    float ang = atan(vL.y, vL.x);
+    // Differential rotation: inner orbits faster.
+    float spin = uTime * (0.9 - 0.6*t);
+    float nz = fbm(vec2(ang*3.0 + spin, t*6.0 + 1.0));
+    float nz2 = fbm(vec2(ang*7.0 - spin*1.6, t*12.0));
+    float dens = (0.45 + 0.75*nz) * (0.7 + 0.5*nz2);
+    // Temperature: white-hot inner → orange → deep red.
+    vec3 hot = vec3(1.0, 0.97, 0.88);
+    vec3 mid = vec3(1.0, 0.66, 0.32);
+    vec3 cool = vec3(0.95, 0.30, 0.12);
+    vec3 col = t < 0.5 ? mix(hot, mid, t/0.5) : mix(mid, cool, (t-0.5)/0.5);
+    // Doppler beaming — one side much brighter.
+    float dop = 0.4 + 1.25 * pow(max(0.0, cos(ang - 1.2)), 1.5);
+    float bright = (1.15 - t) * dens * dop;
+    // Soft inner/outer falloff.
+    bright *= smoothstep(0.0, 0.06, t) * smoothstep(1.0, 0.8, t);
+    gl_FragColor = vec4(col * bright, clamp(bright, 0.0, 1.0));
   }
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-  geo.computeBoundingSphere()
-  return geo
-}
+`
+
+// ---- Camera-facing halo: photon ring + lensed glow round the shadow --------
+const HALO_VERT = DISK_VERT
+const HALO_FRAG = /* glsl */ `
+  precision highp float;
+  varying vec2 vL;
+  uniform float uInner; uniform float uOuter;
+  void main(){
+    float r = length(vL);
+    float t = clamp((r - uInner)/(uOuter - uInner), 0.0, 1.0);
+    // Searing thin photon ring near the inner edge.
+    float ring = smoothstep(0.10, 0.0, abs(t - 0.06));
+    // Soft halo falling off outward, brighter top & bottom (lensed disk arc).
+    float ang = atan(vL.y, vL.x);
+    float arc = 0.55 + 0.45 * abs(sin(ang));
+    float halo = pow(1.0 - t, 2.2) * 0.5 * arc;
+    float a = ring * 1.6 + halo;
+    vec3 c = mix(vec3(1.0, 0.93, 0.78), vec3(1.0, 0.5, 0.22), t);
+    gl_FragColor = vec4(c * a, clamp(a, 0.0, 1.0));
+  }
+`
 
 export default function BlackHole() {
   const center = useMemo(
     () => new THREE.Vector3(...DIR).normalize().multiplyScalar(lyToRenderUnits(DISTANCE_LY)),
     [],
   )
-  const diskRef = useRef<THREE.Points>(null)
-  const disk = useMemo(() => buildDisk(4500), [])
+  const diskRef = useRef<THREE.ShaderMaterial>(null)
+  const haloRef = useRef<THREE.Mesh>(null)
+
   const diskMat = useMemo(
     () =>
-      new THREE.PointsMaterial({
-        size: 2.4,
-        sizeAttenuation: true,
-        vertexColors: true,
+      new THREE.ShaderMaterial({
+        vertexShader: DISK_VERT,
+        fragmentShader: DISK_FRAG,
+        uniforms: { uTime: { value: 0 }, uInner: { value: DISK_INNER }, uOuter: { value: DISK_OUTER } },
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+      }),
+    [],
+  )
+  const haloMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: HALO_VERT,
+        fragmentShader: HALO_FRAG,
+        uniforms: { uInner: { value: RS * 1.15 }, uOuter: { value: RS * 3.4 } },
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
@@ -90,44 +127,35 @@ export default function BlackHole() {
       position: [center.x, center.y, center.z],
       radius: DISK_OUTER,
       kind: 'structure',
-      labelRange: DISK_OUTER * 14,
+      labelRange: DISK_OUTER * 16,
     })
     return () => store.unregisterBody('cygnus-x1')
   }, [center])
 
-  useFrame((_, delta) => {
-    if (diskRef.current) diskRef.current.rotation.y += Math.min(delta, 0.1) * 0.25
+  useFrame((state) => {
+    if (diskRef.current) diskRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    if (haloRef.current) haloRef.current.quaternion.copy(state.camera.quaternion)
   })
 
   return (
-    <group position={[center.x, center.y, center.z]} rotation={TILT}>
-      {/* Event horizon — pure black, occludes everything behind it. */}
-      <mesh>
-        <sphereGeometry args={[HORIZON, 48, 48]} />
-        <meshBasicMaterial color="#000000" toneMapped={false} />
-      </mesh>
-      {/* Photon ring — a thin searing rim hugging the horizon. */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[HORIZON * 1.06, HORIZON * 0.04, 16, 96]} />
-        <meshBasicMaterial color="#ffd8a0" toneMapped={false} />
-      </mesh>
-      {/* Accretion disk. */}
-      <points ref={diskRef} geometry={disk} material={diskMat} frustumCulled={false} />
-      {/* Relativistic jets — twin beams along the spin axis. */}
-      {[1, -1].map((s) => (
-        <mesh key={s} position={[0, s * DISK_OUTER * 1.6, 0]} rotation={[s < 0 ? Math.PI : 0, 0, 0]}>
-          <coneGeometry args={[10, DISK_OUTER * 3.2, 16, 1, true]} />
-          <meshBasicMaterial
-            color="#9cc8ff"
-            transparent
-            opacity={0.28}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            toneMapped={false}
-          />
+    <group position={[center.x, center.y, center.z]}>
+      <group rotation={TILT}>
+        {/* Event horizon — pure black, occludes everything behind it. */}
+        <mesh>
+          <sphereGeometry args={[RS, 64, 64]} />
+          <meshBasicMaterial color="#000000" toneMapped={false} />
         </mesh>
-      ))}
+        {/* Accretion disk, flat in this plane. */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[DISK_INNER, DISK_OUTER, 160, 1]} />
+          <primitive object={diskMat} ref={diskRef} attach="material" />
+        </mesh>
+      </group>
+      {/* Photon ring + lensed halo — always faces the camera. */}
+      <mesh ref={haloRef}>
+        <ringGeometry args={[RS * 1.15, RS * 3.4, 96, 1]} />
+        <primitive object={haloMat} attach="material" />
+      </mesh>
     </group>
   )
 }
