@@ -1,9 +1,42 @@
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 
 import { ORBITERS, SURFACE_OBJECTS, MODEL_RADII } from '../data/spaceObjects'
 import { proximityBodies } from '../stores/proximityStore'
+
+// Real public-domain NASA 3D models (nasa/NASA-3D-Resources). Curiosity reuses
+// the Perseverance model — near-identical rover design (no clean GLB exists).
+const GLB = {
+  iss: `${import.meta.env.BASE_URL}models/iss.glb`,
+  hubble: `${import.meta.env.BASE_URL}models/hubble.glb`,
+  rover: `${import.meta.env.BASE_URL}models/perseverance.glb`,
+}
+useGLTF.preload(GLB.iss)
+useGLTF.preload(GLB.hubble)
+useGLTF.preload(GLB.rover)
+
+/**
+ * Load a GLB and normalize it to a unit bounding sphere centred at the origin,
+ * so the manager's per-kind scale (MODEL_RADII) sizes it consistently with the
+ * procedural fallbacks. `rot` corrects each model's native up-axis.
+ */
+function GltfModel({ url, rot }: { url: string; rot?: [number, number, number] }) {
+  const { scene } = useGLTF(url)
+  const node = useMemo(() => {
+    const c = scene.clone(true)
+    const sphere = new THREE.Box3().setFromObject(c).getBoundingSphere(new THREE.Sphere())
+    const s = sphere.radius > 0 ? 1 / sphere.radius : 1
+    c.scale.setScalar(s)
+    c.position.set(-sphere.center.x * s, -sphere.center.y * s, -sphere.center.z * s)
+    const g = new THREE.Group()
+    if (rot) g.rotation.set(rot[0], rot[1], rot[2])
+    g.add(c)
+    return g
+  }, [scene, rot])
+  return <primitive object={node} />
+}
 
 // ===========================================================================
 // 3D MODELS FOR HUMAN-MADE OBJECTS
@@ -339,10 +372,31 @@ interface Item {
 }
 
 function modelFor(id: string, kind: Item['kind']): React.ReactNode {
-  if (id === 'iss') return <ISSModel />
+  // Real NASA GLB models for the iconic craft, with the procedural shapes as
+  // the loading fallback (so they still appear instantly, then sharpen).
+  if (id === 'iss') {
+    return (
+      <Suspense fallback={<ISSModel />}>
+        <GltfModel url={GLB.iss} />
+      </Suspense>
+    )
+  }
+  if (id === 'hubble') {
+    return (
+      <Suspense fallback={<HubbleModel />}>
+        <GltfModel url={GLB.hubble} />
+      </Suspense>
+    )
+  }
+  if (kind === 'rover') {
+    return (
+      <Suspense fallback={<RoverModel />}>
+        {/* GLB is Z-up → stand it on +Y (radial-out) like the procedural rover. */}
+        <GltfModel url={GLB.rover} rot={[-Math.PI / 2, 0, 0]} />
+      </Suspense>
+    )
+  }
   if (id === 'tiangong') return <TiangongModel />
-  if (id === 'hubble') return <HubbleModel />
-  if (kind === 'rover') return <RoverModel />
   if (kind === 'flag') return <FlagModel />
   return <SatelliteModel />
 }
@@ -414,6 +468,10 @@ export default function SpaceObjectModels() {
 
   return (
     <>
+      {/* Sun-direction light with NO distance falloff (decay 0) so the real GLB
+          models are lit from the Sun correctly at any heliocentric distance — a
+          normal point light's 1/d² would leave them black out by the planets. */}
+      <pointLight position={[0, 0, 0]} intensity={3} decay={0} color="#fff6ec" />
       {items.map((it, idx) => (
         <group
           key={it.id}
