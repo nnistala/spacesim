@@ -120,6 +120,7 @@ export default function SpaceNavigator() {
   const _lookQuat = useRef(new THREE.Quaternion());
   const _camFwd = useRef(new THREE.Vector3());
   const crosshairNameRef = useRef<string | null>(null);
+  const crosshairIdRef = useRef<string | null>(null);
 
   // ---- Zustand selectors (non-reactive reads in the frame loop) ----
   const navStore = useNavigationStore;
@@ -168,6 +169,13 @@ export default function SpaceNavigator() {
     }
   }, [gl.domElement]);
 
+  // Double-click flies to whatever the targeting scope is locked onto (same as
+  // picking it in search) — a quick "warp to what I'm looking at".
+  const onDoubleClick = useCallback(() => {
+    const id = crosshairIdRef.current;
+    if (id) navStore.getState().setWarpTarget(id);
+  }, [navStore]);
+
   // ---- Scroll wheel — adjust speed multiplier ----
   const onWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -205,6 +213,7 @@ export default function SpaceNavigator() {
     window.addEventListener('mousemove', onMouseMove);
     document.addEventListener('pointerlockchange', onPointerLockChange);
     canvas.addEventListener('click', onCanvasClick);
+    canvas.addEventListener('dblclick', onDoubleClick);
     canvas.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
@@ -214,9 +223,10 @@ export default function SpaceNavigator() {
       window.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       canvas.removeEventListener('click', onCanvasClick);
+      canvas.removeEventListener('dblclick', onDoubleClick);
       canvas.removeEventListener('wheel', onWheel);
     };
-  }, [gl.domElement, onKeyDown, onKeyUp, onBlur, onMouseMove, onPointerLockChange, onCanvasClick, onWheel]);
+  }, [gl.domElement, onKeyDown, onKeyUp, onBlur, onMouseMove, onPointerLockChange, onCanvasClick, onDoubleClick, onWheel]);
 
   // ---- Per-frame update ----
   useFrame((_state, delta) => {
@@ -237,6 +247,7 @@ export default function SpaceNavigator() {
     const CROSSHAIR_COS = 0.99892; // within ~2.66° of screen centre
     let bestDot = CROSSHAIR_COS;
     let crosshairName: string | null = null;
+    let crosshairId: string | null = null;
     for (const body of proximityBodies.values()) {
       if (body.excludeFromNearest) continue;
       const dx = camera.position.x - body.position[0];
@@ -255,10 +266,12 @@ export default function SpaceNavigator() {
         if (dot > bestDot) {
           bestDot = dot;
           crosshairName = body.name;
+          crosshairId = body.id;
         }
       }
     }
     if (!isFinite(nearestDist)) nearestDist = 0;
+    crosshairIdRef.current = crosshairId;
     if (crosshairName !== crosshairNameRef.current) {
       crosshairNameRef.current = crosshairName;
       navStore.getState().setCrosshairName(crosshairName);
