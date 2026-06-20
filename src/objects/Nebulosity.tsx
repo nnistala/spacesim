@@ -60,20 +60,20 @@ function makeNebulaTexture(w: number, h: number): THREE.CanvasTexture {
   for (let py = 0; py < h; py++) {
     const v = py / h
     const ny = (v - 0.5) * 2
-    const band = Math.exp(-(ny * ny) / (2 * 0.3 * 0.3)) // galactic-plane concentration
+    // Wide, soft band so the colour is long and broad, not a tight stripe.
+    const band = Math.exp(-(ny * ny) / (2 * 0.42 * 0.42))
     for (let px = 0; px < w; px++) {
       // Wrap longitude through cos/sin so there's no vertical seam.
       const lon = (px / w) * Math.PI * 2
       const cx = Math.cos(lon)
       const cz = Math.sin(lon)
-      const cloud = fbm(cx * 3.0 + 5, v * 5.0 + cz * 3.0 + 10, 6)
-      const fine = fbm(cx * 9.0 + 50, v * 11.0 + cz * 9.0 + 90, 4)
-      let density = band * Math.pow(Math.max(0, cloud - 0.3) * 1.9, 1.3)
-      density *= 0.5 + 0.5 * fine
+      // LOW frequency → big, lengthy, broad swells of colour (no fine wisps).
+      const cloud = fbm(cx * 1.3 + 5, v * 1.7 + cz * 1.3 + 10, 4)
+      let density = band * Math.pow(Math.max(0, cloud - 0.32) * 2.0, 1.2)
       density = Math.min(1, density)
 
-      // Region colour from low-frequency noise → smooth patches of each hue.
-      const cn = fbm(cx * 1.4 + 200, v * 1.8 + cz * 1.4 + 300, 3)
+      // Region colour from very-low-frequency noise → broad patches of each hue.
+      const cn = fbm(cx * 0.8 + 200, v * 1.0 + cz * 0.8 + 300, 3)
       const idx = Math.min(PALETTE.length - 1, Math.max(0, Math.floor(cn * PALETTE.length * 1.25)))
       const p = PALETTE[idx]
       col.setRGB(p[0], p[1], p[2])
@@ -82,7 +82,8 @@ function makeNebulaTexture(w: number, h: number): THREE.CanvasTexture {
       d[i4] = col.r * 255
       d[i4 + 1] = col.g * 255
       d[i4 + 2] = col.b * 255
-      d[i4 + 3] = density * 105 // faint but visible
+      // Super-light: barely-there tint, just perceptible.
+      d[i4 + 3] = density * 42
     }
   }
   ctx.putImageData(img, 0, 0)
