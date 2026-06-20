@@ -256,6 +256,7 @@ export default function HUD() {
           <div>Scroll — Speed</div>
           <div>Shift — Boost</div>
           <div>Click — Lock cursor</div>
+          <div>Double-click — Fly to target</div>
         </div>
       )}
 
