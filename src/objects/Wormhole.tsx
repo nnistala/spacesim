@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -66,19 +66,23 @@ const FRAG = /* glsl */ `
     float cs = cos(a), sn = sin(a);
     rd.xy = mat2(cs, -sn, sn, cs) * rd.xy;
 
-    // Destination sky: warped stars + a faint cool galaxy haze.
-    float st = starfield(rd * 1.7) + 0.6 * starfield(rd * 3.3 + 10.0);
+    // Destination sky — DARK, blending into space: faint warped stars + dim
+    // warped galaxies (warm smudges) + a thin subtle rim. No glowing blue ball.
+    float st = (starfield(rd * 1.7) + 0.5 * starfield(rd * 3.4 + 10.0)) * 0.7;
     vec3 col = vec3(st);
-    float haze = fbm(rd.xy * 2.5 + rd.z);
-    col += mix(vec3(0.06, 0.10, 0.22), vec3(0.18, 0.10, 0.24), haze) * (0.4 + 0.6 * haze);
-    // Bright Einstein rim.
-    col += vec3(0.55, 0.8, 1.0) * fres * 1.7;
+    float haze = fbm(rd.xy * 2.2 + rd.z * 1.4);
+    vec3 gal = mix(vec3(0.03, 0.04, 0.08), vec3(0.30, 0.17, 0.11), smoothstep(0.5, 0.95, haze));
+    col += gal * (0.18 + 0.4 * haze);
+    col += vec3(0.42, 0.26, 0.18) * smoothstep(0.86, 1.0, haze); // rare warm galaxy cores
+    // Thin, subtle Einstein rim (not a bright halo).
+    col += vec3(0.4, 0.5, 0.66) * pow(fres, 3.5) * 0.55;
 
     gl_FragColor = vec4(col, 1.0);
   }
 `
 
 export default function Wormhole() {
+  const matRef = useRef<THREE.ShaderMaterial>(null)
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -104,13 +108,16 @@ export default function Wormhole() {
   }, [])
 
   useFrame((state) => {
-    mat.uniforms.uTime.value = state.clock.elapsedTime
-    mat.uniforms.uCam.value.copy(state.camera.position)
+    const m = matRef.current
+    if (!m) return
+    m.uniforms.uTime.value = state.clock.elapsedTime
+    m.uniforms.uCam.value.copy(state.camera.position)
   })
 
   return (
-    <mesh position={[POSITION.x, POSITION.y, POSITION.z]} material={mat} frustumCulled={false}>
+    <mesh position={[POSITION.x, POSITION.y, POSITION.z]} frustumCulled={false}>
       <sphereGeometry args={[RADIUS, 96, 96]} />
+      <primitive object={mat} ref={matRef} attach="material" />
     </mesh>
   )
 }

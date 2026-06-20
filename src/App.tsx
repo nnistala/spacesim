@@ -19,6 +19,7 @@ import StarField from './objects/StarField'
 import AlphaCentauri from './objects/AlphaCentauri'
 import BlackHole from './objects/BlackHole'
 import Wormhole from './objects/Wormhole'
+import WarpTunnel from './objects/WarpTunnel'
 import Cosmos from './objects/Cosmos'
 import SpaceNavigator from './controls/SpaceNavigator'
 import Joystick from './controls/Joystick'
@@ -63,6 +64,8 @@ function Scene() {
         <SolarSystemScene />
         <ObjectLabels />
       </Suspense>
+      {/* Wormhole-jump cutscene overlay (shown only mid-jump). */}
+      <WarpTunnel />
       <EffectComposer multisampling={0}>
         <Bloom
           intensity={0.7}

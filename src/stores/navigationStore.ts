@@ -24,6 +24,8 @@ export interface NavigationState {
   warpProgress: number;
   /** Name of the body currently under the targeting reticle (or null). */
   crosshairName: string | null;
+  /** True while the wormhole-jump cutscene is playing (drives the overlay). */
+  wormholeWarp: boolean;
 
   setPosition: (pos: THREE.Vector3) => void;
   setVelocity: (vel: THREE.Vector3) => void;
@@ -34,6 +36,7 @@ export interface NavigationState {
   setWarpTarget: (target: string | null) => void;
   setWarpProgress: (progress: number) => void;
   setCrosshairName: (name: string | null) => void;
+  setWormholeWarp: (v: boolean) => void;
 }
 
 export const useNavigationStore = create<NavigationState>((set) => ({
@@ -48,6 +51,7 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   warpTarget: null,
   warpProgress: 0,
   crosshairName: null,
+  wormholeWarp: false,
 
   setPosition: (position) => set({ position }),
   setVelocity: (velocity) => set({ velocity }),
@@ -59,4 +63,5 @@ export const useNavigationStore = create<NavigationState>((set) => ({
   setWarpTarget: (warpTarget) => set({ warpTarget }),
   setWarpProgress: (warpProgress) => set({ warpProgress }),
   setCrosshairName: (crosshairName) => set({ crosshairName }),
+  setWormholeWarp: (wormholeWarp) => set({ wormholeWarp }),
 }));

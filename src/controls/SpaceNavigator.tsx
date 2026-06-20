@@ -121,6 +121,12 @@ export default function SpaceNavigator() {
   const _camFwd = useRef(new THREE.Vector3());
   const crosshairNameRef = useRef<string | null>(null);
   const crosshairIdRef = useRef<string | null>(null);
+  const warpRef = useRef<{
+    phase: 'idle' | 'active';
+    t0: number;
+    teleported: boolean;
+    cooldownUntil: number;
+  }>({ phase: 'idle', t0: 0, teleported: false, cooldownUntil: 0 });
 
   // ---- Zustand selectors (non-reactive reads in the frame loop) ----
   const navStore = useNavigationStore;
@@ -229,12 +235,77 @@ export default function SpaceNavigator() {
   }, [gl.domElement, onKeyDown, onKeyUp, onBlur, onMouseMove, onPointerLockChange, onCanvasClick, onDoubleClick, onWheel]);
 
   // ---- Per-frame update ----
-  useFrame((_state, delta) => {
+  useFrame((state, delta) => {
     // Cap delta to prevent huge jumps when tab is inactive.
     const dt = Math.min(delta, 0.1);
 
     const keys = keysRef.current;
     const navState = navStore.getState();
+
+    // ---------------------------------------------------------------
+    // WORMHOLE JUMP (easter egg) — flying INTO the wormhole plays a warp
+    // cutscene and drops you out the other side, near the black hole.
+    // ---------------------------------------------------------------
+    const elapsed = state.clock.elapsedTime;
+    const warp = warpRef.current;
+    const wh = proximityBodies.get('wormhole');
+    if (wh) {
+      const wdx = camera.position.x - wh.position[0];
+      const wdy = camera.position.y - wh.position[1];
+      const wdz = camera.position.z - wh.position[2];
+      const dist2 = wdx * wdx + wdy * wdy + wdz * wdz;
+      const dist = Math.sqrt(dist2);
+
+      // Gravitational pull — when within 3× radius, gently accelerate
+      // the camera toward the centre (the closer you are, the stronger).
+      if (warp.phase === 'idle' && dist < wh.radius * 3 && dist > 0.1) {
+        const pull = Math.pow(1.0 - dist / (wh.radius * 3), 2) * 120 * dt;
+        velocityRef.current.addScaledVector(
+          _forward.current.set(-wdx / dist, -wdy / dist, -wdz / dist),
+          pull,
+        );
+      }
+
+      // Trigger: entering within 1.3× radius (just touching the surface)
+      const trigger = wh.radius * 1.3;
+      if (warp.phase === 'idle' && elapsed > warp.cooldownUntil && dist2 < trigger * trigger) {
+        warp.phase = 'active';
+        warp.t0 = elapsed;
+        warp.teleported = false;
+        navState.setWormholeWarp(true);
+      }
+    }
+    if (warp.phase === 'active') {
+      const te = elapsed - warp.t0;
+      if (!warp.teleported && te >= 2.1) {
+        const bh = proximityBodies.get('cygnus-x1');
+        if (bh) {
+          // Keep the same relative camera angle, but set distance exactly to bh.radius 
+          // so the HUD reads "0 m" distance!
+          const dir = new THREE.Vector3(760, 260, 640).normalize();
+          const targetDist = bh.radius; 
+          const offset = dir.multiplyScalar(targetDist);
+
+          camera.position.set(bh.position[0] + offset.x, bh.position[1] + offset.y, bh.position[2] + offset.z);
+          camera.lookAt(bh.position[0], bh.position[1], bh.position[2]);
+        }
+        velocityRef.current.set(0, 0, 0);
+        warp.teleported = true;
+      }
+      if (te >= 4.6) {
+        warp.phase = 'idle';
+        warp.cooldownUntil = elapsed + 4.0;
+        navState.setWormholeWarp(false);
+      }
+      // Freeze controls during the cutscene.
+      const eu = _euler.current;
+      eu.setFromQuaternion(camera.quaternion, 'YXZ');
+      navState.setPosition(camera.position.clone());
+      navState.setRotation(eu.clone());
+      navState.setSpeed(0, 'm/s', '0 m/s');
+      navState.setWarpProgress(0);
+      return;
+    }
 
     // ---------------------------------------------------------------
     // 0. NEAREST BODY — surface distance (drives adaptive speed + HUD)
