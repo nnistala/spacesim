@@ -86,7 +86,7 @@ function makeNebulaTexture(w: number, h: number): THREE.CanvasTexture {
 
       // Smoothly blend BETWEEN authentic palette colours (no hard patches).
       const cn = fbm(cx * 0.8 + 200, v * 1.0 + cz * 0.8 + 300, 3)
-      let hp = Math.min(0.999, Math.max(0, cn * 1.2)) * (PALETTE.length - 1)
+      const hp = Math.min(0.999, Math.max(0, cn * 1.2)) * (PALETTE.length - 1)
       const i0 = Math.floor(hp)
       const f = hp - i0
       const a = PALETTE[i0]
