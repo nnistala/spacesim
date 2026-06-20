@@ -30,7 +30,7 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 - **18 natural satellites** — the Galilean moons of Jupiter, Titan and friends at Saturn, the moons of Mars, Uranus and Neptune (including retrograde Triton), each correctly sun-lit with real orbital-period ratios.
 - **Human-made objects** — fly up to **real public-domain NASA 3D models** of the ISS, Hubble, the Mars rovers (Perseverance, Curiosity), LRO, MRO, MAVEN and GOES, plus Tiangong, GPS and the Apollo flags.
 - **Minor bodies** — the asteroid belt, comets with ion + dust tails, and shooting-star meteors streaking across the sky.
-- **Deep sky** — our nearest neighbour **Alpha Centauri** (a real triple-star system), a **black hole** (Cygnus X-1) with accretion disk + jets, the **Milky Way**, the **Andromeda**, **Triangulum**, **Whirlpool** and edge-on **Sombrero** galaxies, the **Crab Nebula** supernova remnant, the **Carina**, **Orion**, **Eagle/Pillars** and **Lagoon** nebulae, the **Ring** and **Helix** planetary nebulae, the **Local Group**, the **Virgo Cluster**, and the cosmic web out to the observable edge.
+- **Deep sky** — our nearest neighbour **Alpha Centauri** (a real triple-star system), an Interstellar-style **black hole** (Cygnus X-1) with a lensed accretion disk, a **wormhole** out near Saturn, the **Milky Way**, the **Andromeda**, **Triangulum**, **Whirlpool** and edge-on **Sombrero** galaxies, the **Crab Nebula** supernova remnant, the **Carina**, **Orion**, **Eagle/Pillars** and **Lagoon** nebulae, the **Ring** and **Helix** planetary nebulae, the **Local Group**, the **Virgo Cluster**, and the cosmic web out to the observable edge.
 - **Targeting scope** — a reticle that locks onto and names whatever body is in your sights.
 - **Search & fly-to** — press `/`, type any object's name, and warp straight to a perfectly framed view.
 - **Time controls** — pause or speed up the simulation to watch moons and satellites orbit.
@@ -40,9 +40,9 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 
 | | |
 |---|---|
-| ![Black Hole](docs/screenshots/black-hole.png) **Black Hole (Cygnus X-1)** — accretion disk, photon ring & jets | ![Crab Nebula](docs/screenshots/crab-nebula.png) **Crab Nebula (M1)** — supernova remnant, Hubble palette |
-| ![Whirlpool Galaxy](docs/screenshots/whirlpool-galaxy.png) **Whirlpool Galaxy (M51)** — a grand-design spiral you can fly to | ![Alpha Centauri](docs/screenshots/alpha-centauri.png) **Alpha Centauri** — our nearest stellar neighbours (real triple system) |
-| ![ISS](docs/screenshots/iss.png) **ISS** — the real NASA 3D model, up close | ![Targeting scope](docs/screenshots/targeting-scope.png) **Targeting scope** — names what you look at; double-click to fly there |
+| ![Black Hole](docs/screenshots/black-hole.png) **Black Hole (Cygnus X-1)** — lensed accretion disk & photon ring | ![Wormhole](docs/screenshots/wormhole.png) **Wormhole** — a refracting hole in spacetime, near Saturn |
+| ![Crab Nebula](docs/screenshots/crab-nebula.png) **Crab Nebula (M1)** — supernova remnant, Hubble palette | ![Whirlpool Galaxy](docs/screenshots/whirlpool-galaxy.png) **Whirlpool Galaxy (M51)** — a grand-design spiral |
+| ![Alpha Centauri](docs/screenshots/alpha-centauri.png) **Alpha Centauri** — our nearest stellar neighbours | ![ISS](docs/screenshots/iss.png) **ISS** — the real NASA 3D model, up close |
 
 ## 🔬 Scientific accuracy
 

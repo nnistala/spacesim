@@ -18,6 +18,7 @@ import SpaceObjectModels from './objects/SpaceObjectModels'
 import StarField from './objects/StarField'
 import AlphaCentauri from './objects/AlphaCentauri'
 import BlackHole from './objects/BlackHole'
+import Wormhole from './objects/Wormhole'
 import Cosmos from './objects/Cosmos'
 import SpaceNavigator from './controls/SpaceNavigator'
 import Joystick from './controls/Joystick'
@@ -45,6 +46,8 @@ function SolarSystemScene() {
       <AlphaCentauri />
       {/* A stellar-mass black hole with accretion disk + jets. */}
       <BlackHole />
+      {/* An Interstellar-style wormhole out near Saturn's distance. */}
+      <Wormhole />
       {/* Everything beyond — Oort, Milky Way, cosmic web, observable edge. */}
       <Cosmos />
     </>
