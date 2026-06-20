@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Exo 2', 'Orbitron', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --hud-bg: rgba(0, 0, 0, 0.5);
+  --hud-border: rgba(0, 136, 255, 0.3);
+  --hud-text: rgba(255, 255, 255, 0.9);
+  --hud-accent: #0088ff;
+  --hud-accent-glow: rgba(0, 136, 255, 0.4);
+  --font-display: 'Orbitron', monospace;
+  --font-body: 'Exo 2', sans-serif;
+}
