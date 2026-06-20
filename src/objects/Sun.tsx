@@ -723,7 +723,11 @@ function SolarFlares({ sunRadius: radius }: { sunRadius: number }) {
 // SolarProminences — great arcing loops of plasma off the limb (the "flames")
 // ---------------------------------------------------------------------------
 
-const PROMINENCE_COUNT = 18;
+// Disabled: the thin additive tube loops read as pale "wireframe" arcs around
+// the limb, which looks unnatural. The Sun's activity now comes solely from the
+// crisp particle-burst flares (SolarFlares). Bump this to re-enable the loops
+// once they're reworked into soft, volumetric plasma instead of thin tubes.
+const PROMINENCE_COUNT = 0;
 
 interface ProminenceState {
   mesh: THREE.Mesh;
