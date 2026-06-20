@@ -6,6 +6,8 @@
 // with the planet's true relative size under the hybrid scale system.
 // ===========================================================================
 
+import { assetPath } from '../utils/assetPath'
+
 export interface RingVisual {
   texture: string
   /** Inner radius as a multiple of the planet's radius. */
@@ -24,22 +26,22 @@ export interface PlanetVisual {
 }
 
 export const PLANET_VISUALS: Record<string, PlanetVisual> = {
-  mercury: { texture: '/textures/2k_mercury.jpg' },
+  mercury: { texture: assetPath('/textures/2k_mercury.jpg') },
   venus: {
-    texture: '/textures/2k_venus_surface.jpg',
-    clouds: '/textures/2k_venus_atmosphere.jpg',
+    texture: assetPath('/textures/2k_venus_surface.jpg'),
+    clouds: assetPath('/textures/2k_venus_atmosphere.jpg'),
   },
-  mars: { texture: '/textures/2k_mars.jpg' },
-  jupiter: { texture: '/textures/2k_jupiter.jpg' },
+  mars: { texture: assetPath('/textures/2k_mars.jpg') },
+  jupiter: { texture: assetPath('/textures/2k_jupiter.jpg') },
   saturn: {
-    texture: '/textures/2k_saturn.jpg',
+    texture: assetPath('/textures/2k_saturn.jpg'),
     // Real ring span: ~1.11 R (D ring) out to ~2.27 R (F ring edge).
     rings: {
-      texture: '/textures/2k_saturn_ring_alpha.png',
+      texture: assetPath('/textures/2k_saturn_ring_alpha.png'),
       inner: 1.18,
       outer: 2.27,
     },
   },
-  uranus: { texture: '/textures/2k_uranus.jpg' },
-  neptune: { texture: '/textures/2k_neptune.jpg' },
+  uranus: { texture: assetPath('/textures/2k_uranus.jpg') },
+  neptune: { texture: assetPath('/textures/2k_neptune.jpg') },
 }

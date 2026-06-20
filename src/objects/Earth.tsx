@@ -6,6 +6,7 @@ import Moon from './Moon';
 import { useUIStore } from '../stores/uiStore';
 import { EARTH_POSITION as EARTH_POSITION_CONFIG, BODY_RADII } from '../data/scaleConfig';
 import { useProximityStore } from '../stores/proximityStore';
+import { assetPath } from '../utils/assetPath';
 
 // ---------------------------------------------------------------------------
 // Inline Earth surface shaders (day/night blending with city lights)
@@ -162,10 +163,10 @@ function Earth({
   // ---- Real NASA textures (vendored locally, loaded via Suspense) ----
   // 8K Blue Marble day, 8K Black Marble night lights, 8K clouds, 2K ocean mask.
   const [dayMap, nightMap, specularMap, cloudsMap] = useTexture([
-    '/textures/earth_day_8k.jpg',
-    '/textures/earth_night_8k.jpg',
-    '/textures/earth_specular_2k.jpg',
-    '/textures/earth_clouds_8k.jpg',
+    assetPath('/textures/earth_day_8k.jpg'),
+    assetPath('/textures/earth_night_8k.jpg'),
+    assetPath('/textures/earth_specular_2k.jpg'),
+    assetPath('/textures/earth_clouds_8k.jpg'),
   ]);
 
   useMemo(() => {

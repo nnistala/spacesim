@@ -6,6 +6,7 @@ import { BODY_RADII, MOON_DISTANCE_UNITS } from '../data/scaleConfig';
 import { getTimeScale } from '../stores/timeStore';
 import { useProximityStore, proximityBodies } from '../stores/proximityStore';
 import { useTexture } from '@react-three/drei';
+import { assetPath } from '../utils/assetPath';
 
 // ---------------------------------------------------------------------------
 // Scale constants (relative to Earth radius = 1 unit)
@@ -127,7 +128,7 @@ function Moon({
   }, []);
 
   // ---- Real Moon albedo (8K Solar System Scope, vendored locally) ----
-  const moonMap = useTexture('/textures/moon_8k.jpg');
+  const moonMap = useTexture(assetPath('/textures/moon_8k.jpg'));
   useMemo(() => {
     moonMap.colorSpace = THREE.SRGBColorSpace;
     moonMap.anisotropy = 16;
