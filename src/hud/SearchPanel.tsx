@@ -45,9 +45,13 @@ export default function SearchPanel() {
 
   useEffect(() => {
     if (open) {
-      // Release pointer lock so the cursor is usable, then focus the field.
+      // Release pointer lock so the cursor is usable.
       document.exitPointerLock?.()
-      requestAnimationFrame(() => inputRef.current?.focus())
+      // Auto-focus only on desktop. On touch devices, focusing immediately pops
+      // the on-screen keyboard before the user even taps the field — let them
+      // tap the box themselves.
+      const isTouch = window.matchMedia('(pointer: coarse)').matches
+      if (!isTouch) requestAnimationFrame(() => inputRef.current?.focus())
     }
   }, [open])
 

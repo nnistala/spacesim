@@ -59,12 +59,14 @@ function Scene() {
       </Suspense>
       <EffectComposer multisampling={0}>
         <Bloom
-          intensity={1.2}
-          luminanceThreshold={0.6}
-          luminanceSmoothing={0.3}
+          intensity={0.7}
+          luminanceThreshold={0.78}
+          luminanceSmoothing={0.25}
           mipmapBlur
         />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        {/* PBR Neutral preserves colour saturation instead of crushing bright
+            additive points (stars/galaxies/nebulae) to white like ACES does. */}
+        <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       </EffectComposer>
     </>
   )
@@ -74,6 +76,10 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
       <Canvas
+        // Cap the device pixel ratio: uncapped, high-DPI phones render the
+        // additive point sprites huge → dense overlap blooms into white
+        // "floodlights" (and tanks perf). 2 is plenty crisp.
+        dpr={[1, 2]}
         gl={{
           logarithmicDepthBuffer: true,
           antialias: true,

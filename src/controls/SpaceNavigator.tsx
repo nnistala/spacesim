@@ -25,7 +25,13 @@ const ACCELERATION_LERP = 0.08;
 const MOUSE_SENSITIVITY = 0.002;
 
 /** Joystick look sensitivity (radians per second at full deflection). */
-const JOYSTICK_LOOK_SENSITIVITY = 2.0;
+const JOYSTICK_LOOK_SENSITIVITY = 1.1;
+
+/**
+ * Response-curve exponent for the move joystick: a gentle push moves slowly and
+ * only full deflection is fast, so touch control is precise instead of twitchy.
+ */
+const JOYSTICK_MOVE_CURVE = 2.2;
 
 /** Scroll wheel multiplier bounds. */
 const SCROLL_MIN = 0.1;
@@ -279,8 +285,14 @@ export default function SpaceNavigator() {
     if (keys.has('KeyD') || keys.has('ArrowRight')) inputX += 1;
     const jMoveX = useJoystickStore.getState().moveX;
     const jMoveY = useJoystickStore.getState().moveY;
-    inputZ += jMoveY;
-    inputX += jMoveX;
+    // Apply a response curve to the joystick magnitude (keeps direction) so a
+    // light touch crawls and only a full push is fast — usable on a phone.
+    const jMag = Math.min(1, Math.hypot(jMoveX, jMoveY));
+    if (jMag > 0.001) {
+      const jScale = Math.pow(jMag, JOYSTICK_MOVE_CURVE) / jMag;
+      inputZ += jMoveY * jScale;
+      inputX += jMoveX * jScale;
+    }
     const inputLen = Math.sqrt(inputX * inputX + inputZ * inputZ);
     if (inputLen > 1) {
       inputX /= inputLen;

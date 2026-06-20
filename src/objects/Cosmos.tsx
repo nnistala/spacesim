@@ -693,11 +693,11 @@ function buildCrabNebula(center: THREE.Vector3, radius: number, count: number) {
             ? 4 + ((Math.random() * 2) | 0) // green
             : 6
       const p = CRAB_FILAMENT[idx]
-      // Keep most filaments below the bloom threshold so their hue survives
-      // (dense overlap supplies the glow); only the brightest tips blow to white.
-      const b = 0.5 + Math.random() * 0.42
+      // Keep filaments below the bloom threshold so their hue survives (dense
+      // overlap supplies the glow); dim enough to never read as a flashlight.
+      const b = 0.38 + Math.random() * 0.34
       c.setRGB(p[0] * b, p[1] * b, p[2] * b)
-      sizes[i] = 7 + Math.random() * 11
+      sizes[i] = 6 + Math.random() * 8
       angles[i] = Math.random() * Math.PI * 2
       shapes[i] = 0.5 + Math.random() * 0.45 // elongated → wispy filaments
     } else {
@@ -707,9 +707,9 @@ function buildCrabNebula(center: THREE.Vector3, radius: number, count: number) {
       positions[i * 3 + 1] = center.y + gaussian(radius * 0.4 * t) * sy
       positions[i * 3 + 2] = center.z + gaussian(radius * 0.5 * t) * sz
       const p = CRAB_SYNCHROTRON[(Math.random() * CRAB_SYNCHROTRON.length) | 0]
-      const b = 0.5 + Math.random() * 0.4
+      const b = 0.3 + Math.random() * 0.28
       c.setRGB(p[0] * b, p[1] * b, p[2] * b)
-      sizes[i] = 6 + Math.random() * 9
+      sizes[i] = 4 + Math.random() * 6
       angles[i] = Math.random() * Math.PI * 2
       shapes[i] = Math.random() * 0.3 // soft, round haze
     }
@@ -717,14 +717,14 @@ function buildCrabNebula(center: THREE.Vector3, radius: number, count: number) {
     colors[i * 3 + 1] = c.g
     colors[i * 3 + 2] = c.b
   }
-  // Central pulsar — a searing blue-white point.
+  // Central pulsar — a bright blue-white point (not a blinding flash).
   positions[0] = center.x
   positions[1] = center.y
   positions[2] = center.z
-  colors[0] = 1.0
-  colors[1] = 1.0
-  colors[2] = 1.0
-  sizes[0] = 20
+  colors[0] = 0.7
+  colors[1] = 0.8
+  colors[2] = 0.95
+  sizes[0] = 10
   shapes[0] = 0
   return galaxyShaderGeometry(positions, colors, sizes, angles, shapes)
 }
@@ -801,19 +801,14 @@ export default function Cosmos() {
         key: `${n.def.id}-glow`,
         pos: [n.center.x, n.center.y, n.center.z] as [number, number, number],
         color: new THREE.Color((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2),
-        scale: n.def.radius * 3.0,
-        opacity: 0.5,
+        scale: n.def.radius * 3.2,
+        opacity: 0.85,
       }
     })
-    glows.push({
-      key: 'crab-glow',
-      pos: [crab.center.x, crab.center.y, crab.center.z],
-      color: new THREE.Color(0.5, 0.72, 1.0),
-      scale: CRAB.radius * 2.4,
-      opacity: 0.4,
-    })
+    // NB: the Crab gets NO glow halo — its dense filaments are already bright,
+    // and a halo turned it into a blinding "flashlight" blob.
     return glows
-  }, [nebulae, crab])
+  }, [nebulae])
 
   const mwMat = useMemo(() => pointsMaterial(1.2, 0.85), [])
   const kuiperMat = useMemo(() => pointsMaterial(1.4, 0.8), [])
@@ -912,19 +907,33 @@ export default function Cosmos() {
       {namedGalaxies.map((g) => (
         <points key={g.def.id} geometry={g.geo} material={galaxyDiskMat} frustumCulled={false} />
       ))}
-      {/* Soft coloured glow halos behind the nebulae + Crab. */}
+      {/* Soft coloured glow halos behind the nebulae + Crab: a broad outer halo
+          plus a tighter, brighter inner core so they read as luminous clouds. */}
       {nebulaGlows.map((g) => (
-        <sprite key={g.key} position={g.pos} scale={[g.scale, g.scale, 1]}>
-          <spriteMaterial
-            map={GLOW_TEX}
-            color={g.color}
-            transparent
-            opacity={g.opacity}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            toneMapped={false}
-          />
-        </sprite>
+        <group key={g.key} position={g.pos}>
+          <sprite scale={[g.scale, g.scale, 1]}>
+            <spriteMaterial
+              map={GLOW_TEX}
+              color={g.color}
+              transparent
+              opacity={g.opacity * 0.6}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              toneMapped={false}
+            />
+          </sprite>
+          <sprite scale={[g.scale * 0.5, g.scale * 0.5, 1]}>
+            <spriteMaterial
+              map={GLOW_TEX}
+              color={g.color}
+              transparent
+              opacity={g.opacity}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              toneMapped={false}
+            />
+          </sprite>
+        </group>
       ))}
       {/* JWST-style emission nebulae. */}
       {nebulae.map((n) => (
