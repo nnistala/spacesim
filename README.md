@@ -2,27 +2,29 @@
 
 # 🪐 SpaceSim
 
-### A scientifically accurate, cinematic 3D journey through the known universe — in your browser.
+### A love letter to the night sky — fly the real, scientifically faithful universe, from your backyard to the edge of everything. In a browser tab.
 
 ![SpaceSim hero](docs/screenshots/hero.png)
 
-[**▶ Launch the live demo**](https://nnistala.github.io/spacesim/) · [Features](#-features) · [Gallery](#-gallery) · [Getting started](#-getting-started) · [Roadmap](#-roadmap)
+[**▶ Launch the live demo**](https://nnistala.github.io/spacesim/) · [Features](#-features) · [Gallery](#-gallery) · [Getting started](#-getting-started) · [What's next](#-where-its-wandering-next)
 
 </div>
 
 ---
 
-## ✨ The ambition
+## ✨ Why this exists
 
-SpaceSim is an attempt to build a **real, explorable universe** — one you can fly through from the surface of Earth to the edge of the observable cosmos, on any device, with nothing but a web browser.
+I've always found the night sky almost unbearably beautiful — the quiet enormity of it, the thought that the light landing in your eye left some of those stars before there were any eyes to catch it. SpaceSim is my attempt to bottle a little of that feeling: a **real, explorable universe** you can fall into from a browser tab, drift from the surface of Earth all the way out to the faint cosmic web, and just… *look*.
 
-The bar is **_Interstellar_**. Every star, planet, moon, and nebula should look like it belongs in a Christopher Nolan film *and* be where it actually is in the sky, at the size and color it actually is. No cartoon circles. No flat skyboxes. No ambient-light cheats. Space is black, the Sun is white-hot (not yellow), light obeys the inverse-square law, and orbits are real Keplerian ellipses.
+The one rule I set myself: it has to be **true**. Not a pretty backdrop — the actual universe, with every star, planet, moon and nebula where it really is, the size and colour it really is. So space is black, the Sun is white-hot (never the cartoon yellow), light fades with the inverse square of distance, shadows are genuinely dark, and the planets ride real Keplerian ellipses to wherever they happen to sit in the sky *tonight*. Get the physics honest and the beauty takes care of itself.
 
-It should be **beautiful, mesmerizing — and, when you get close to a dying star or a supernova remnant, a little bit terrifying.**
+It should feel serene most of the time — and, when you drift up to a dying star or the rim of a black hole, just a little bit terrifying. The way the real thing would be, if you were ever lucky and unlucky enough to be there.
+
+This is a side project, made for the love of it. There's no destination — just the wandering.
 
 ## 🌌 What it is
 
-A free-flight space simulator spanning **six scales** — surface → orbital → planetary → stellar → galactic → cosmic — stitched together with a hybrid logarithmic scale so the whole universe fits in one continuous, float-safe scene. Fly anywhere, search for any object, and let the targeting scope name whatever you point at.
+A free-flight space simulator spanning **six scales** — surface → orbital → planetary → stellar → galactic → cosmic — stitched together with a hybrid logarithmic scale so the entire universe fits inside one continuous, float-safe scene. No loading screens between worlds; you just keep flying. Point yourself at anything, search for it by name, and let the targeting scope whisper back what you're looking at.
 
 ## 🚀 Features
 
@@ -30,7 +32,7 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 - **18 natural satellites** — the Galilean moons of Jupiter, Titan and friends at Saturn, the moons of Mars, Uranus and Neptune (including retrograde Triton), each correctly sun-lit with real orbital-period ratios.
 - **Human-made objects** — fly up to **real public-domain NASA 3D models** of the ISS, Hubble, the Mars rovers (Perseverance, Curiosity), LRO, MRO, MAVEN and GOES, plus Tiangong, GPS and the Apollo flags.
 - **Minor bodies** — the asteroid belt, comets with ion + dust tails, and shooting-star meteors streaking across the sky.
-- **Deep sky** — our nearest neighbour **Alpha Centauri** (a real triple-star system), an Interstellar-style **black hole** (Cygnus X-1) with a lensed accretion disk, a **wormhole** out near Saturn, the **Milky Way**, the **Andromeda**, **Triangulum**, **Whirlpool** and edge-on **Sombrero** galaxies, the **Crab Nebula** supernova remnant, the **Carina**, **Orion**, **Eagle/Pillars** and **Lagoon** nebulae, the **Ring** and **Helix** planetary nebulae, the **Local Group**, the **Virgo Cluster**, and the cosmic web out to the observable edge.
+- **Deep sky** — our nearest neighbour **Alpha Centauri** (a real triple-star system), a **black hole** (Cygnus X-1) with a glowing, gravitationally-lensed accretion disk, a **wormhole** out near Saturn, the **Milky Way**, the **Andromeda**, **Triangulum**, **Whirlpool** and edge-on **Sombrero** galaxies, the **Crab Nebula** supernova remnant, the **Carina**, **Orion**, **Eagle/Pillars** and **Lagoon** nebulae, the **Ring** and **Helix** planetary nebulae, the blue **Pleiades** cluster, the **Local Group**, the **Virgo Cluster**, and the cosmic web all the way out to the observable edge.
 - **Targeting scope** — a reticle that locks onto and names whatever body is in your sights.
 - **Search & fly-to** — press `/`, type any object's name, and warp straight to a perfectly framed view.
 - **Time controls** — pause or speed up the simulation to watch moons and satellites orbit.
@@ -40,13 +42,16 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 
 | | |
 |---|---|
-| ![Black Hole](docs/screenshots/black-hole.png) **Black Hole (Cygnus X-1)** — lensed accretion disk & photon ring | ![Wormhole](docs/screenshots/wormhole.png) **Wormhole** — a refracting hole in spacetime, near Saturn |
-| ![Crab Nebula](docs/screenshots/crab-nebula.png) **Crab Nebula (M1)** — supernova remnant, Hubble palette | ![Whirlpool Galaxy](docs/screenshots/whirlpool-galaxy.png) **Whirlpool Galaxy (M51)** — a grand-design spiral |
-| ![Alpha Centauri](docs/screenshots/alpha-centauri.png) **Alpha Centauri** — our nearest stellar neighbours | ![ISS](docs/screenshots/iss.png) **ISS** — the real NASA 3D model, up close |
+| ![Black Hole](docs/screenshots/black-hole.png) **Black Hole (Gargantua / Cygnus X-1)** — a lensed, glowing accretion disk and photon ring | ![Wormhole](docs/screenshots/wormhole.png) **Wormhole** — a refracting sphere of warped starlight, out near Saturn |
+| ![Pleiades](docs/screenshots/pleiades.png) **Pleiades (M45)** — the Seven Sisters, a young blue open cluster | ![Crab Nebula](docs/screenshots/crab-nebula.png) **Crab Nebula (M1)** — supernova remnant in the Hubble palette |
+| ![Whirlpool Galaxy](docs/screenshots/whirlpool-galaxy.png) **Whirlpool Galaxy (M51)** — a grand-design spiral | ![Lagoon Nebula](docs/screenshots/lagoon-nebula.png) **Lagoon Nebula (M8)** — a pink H‑α star-forming cloud |
+| ![Alpha Centauri](docs/screenshots/alpha-centauri.png) **Alpha Centauri** — our nearest stellar neighbours (with red Proxima) | ![ISS](docs/screenshots/iss.png) **ISS** — the real NASA 3D model, up close |
+
+> 🥚 **There's a secret hidden out near Saturn.** I won't say what it does or how it works — but wander close enough, and you might suddenly find yourself somewhere you have absolutely no business being. Fans of a certain space film will know it when they feel it.
 
 ## 🔬 Scientific accuracy
 
-SpaceSim deliberately favours real physics and real data:
+Wonder and rigour aren't opposites here — the awe *comes from* the fact that it's all real. So SpaceSim leans on honest physics and real data, every time:
 
 - The **Sun is white** (G2V, ~5778 K blackbody), not yellow.
 - **Distances** use real astronomical values; only the empty gaps are log-compressed so travel stays tractable.
@@ -99,14 +104,16 @@ The live site is hosted on **GitHub Pages** at **https://nnistala.github.io/spac
 
 A ready-to-use GitHub Actions workflow for automated build-and-deploy on every push is included at `.github/workflows/deploy.yml`. To enable it, grant the `workflow` scope once (`gh auth refresh -h github.com -s workflow`), commit the `.github/` folder, and switch the Pages source to "GitHub Actions".
 
-## 🗺 Roadmap
+## 🗺 Where it's wandering next
 
-- More NASA showpieces: Pillars of Creation / Eagle Nebula, Ring, Helix, Lagoon, Horsehead, Pleiades
-- Planetary surface landing & terrain
-- Black holes with accretion disks, pulsars, and more named galaxies
-- Distinct Laniakea Supercluster flow structure
-- Progressive 2K→8K texture streaming
-- Magnetic-field visualizations around the Sun
+The list is never really finished — there's always one more beautiful thing out there to chase:
+
+- The **Horsehead**, sharper **Pillars of Creation**, and properly structured planetary-nebula shells
+- **Pulsars** and **magnetars** — lighthouses at the end of stellar life
+- Actually **landing** on a planet — surface terrain under your feet
+- The **Laniakea Supercluster**'s great gravitational river of galaxies
+- Progressive **2K → 8K** texture streaming as you draw close
+- The Sun's twisting **magnetic field** made visible
 
 ## 🙏 Credits & data
 

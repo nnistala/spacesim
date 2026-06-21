@@ -100,6 +100,13 @@ const FLY_MIN_STANDOFF = 50 / 6371;
 export default function SpaceNavigator() {
   const { camera, gl } = useThree();
 
+  // Dev-only: expose the camera for tooling/automation (screenshot framing).
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const w = window as unknown as Record<string, { camera?: unknown }>;
+    if (w.__sim) w.__sim.camera = camera;
+  }, [camera]);
+
   // ---- Refs for frame-persistent state (no re-renders) ----
   const keysRef = useRef<Set<string>>(new Set());
   const mouseDeltaRef = useRef({ x: 0, y: 0 });
