@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { XROrigin, useXRInputSourceState } from '@react-three/xr'
+import { XROrigin, useXR, useXRInputSourceState } from '@react-three/xr'
 import * as THREE from 'three'
 import { useNavigationStore } from '../stores/navigationStore'
 import { useProximityStore } from '../stores/proximityStore'
@@ -36,8 +36,20 @@ const START = new THREE.Vector3(2005, 1.2, 6)
  */
 export default function XRFlight() {
   const originRef = useRef<THREE.Group>(null)
+  const session = useXR((s) => s.session)
   const left = useXRInputSourceState('controller', 'left')
   const right = useXRInputSourceState('controller', 'right')
+
+  // Critical for a space scene: on entering XR, WebXR resets the camera clip
+  // range to the session default (~1–2 km of render units), which clips
+  // everything past the Sun — so only Earth and the Sun were visible. The whole
+  // log-compressed universe fits inside COSMIC_MAX_UNITS, so widen the far plane
+  // to take it all in. (The desktop view relies on a logarithmic depth buffer,
+  // which WebXR's device-supplied projection can't use, hence the linear range.)
+  useEffect(() => {
+    if (!session) return
+    session.updateRenderState({ depthNear: 0.1, depthFar: COSMIC_MAX_UNITS * 1.1 })
+  }, [session])
 
   const inited = useRef(false)
   const snapLatched = useRef(false)
