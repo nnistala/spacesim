@@ -6,6 +6,7 @@ import { useJoystickStore } from '../stores/joystickStore';
 import { proximityBodies, useProximityStore } from '../stores/proximityStore';
 import { formatRealSpeed } from '../data/scaleConfig';
 import { COSMIC_MAX_UNITS } from '../data/cosmicScale';
+import { xrStore } from '../stores/xrStore';
 
 /** Hard limit on how far from the origin the camera may travel (edge of the
  * observable universe) — stops endless drifting into empty black. */
@@ -249,6 +250,11 @@ export default function SpaceNavigator() {
     const keys = keysRef.current;
     const navState = navStore.getState();
 
+    // In an immersive XR session the headset owns the camera and XRFlight moves
+    // the player rig — the desktop wormhole cutscene and camera writes below are
+    // bypassed (see the early return after the nearest-body scan).
+    const inXR = xrStore.getState().session != null;
+
     // ---------------------------------------------------------------
     // WORMHOLE JUMP (easter egg) — flying INTO the wormhole plays a warp
     // cutscene and drops you out the other side, near the black hole.
@@ -256,7 +262,7 @@ export default function SpaceNavigator() {
     const elapsed = state.clock.elapsedTime;
     const warp = warpRef.current;
     const wh = proximityBodies.get('wormhole');
-    if (wh) {
+    if (wh && !inXR) {
       const wdx = camera.position.x - wh.position[0];
       const wdy = camera.position.y - wh.position[1];
       const wdz = camera.position.z - wh.position[2];
@@ -353,6 +359,22 @@ export default function SpaceNavigator() {
     if (crosshairName !== crosshairNameRef.current) {
       crosshairNameRef.current = crosshairName;
       navStore.getState().setCrosshairName(crosshairName);
+    }
+
+    // In VR, stop here: keep the targeting scope, nearest body and position
+    // (read from the headset-driven camera) flowing to the HUD and to XRFlight's
+    // adaptive speed, but skip all desktop input and camera writes. XRFlight
+    // owns motion via the XR origin; speed is published there.
+    if (inXR) {
+      if (nearestId) {
+        useProximityStore.getState().setNearest({
+          id: nearestId,
+          name: nearestName,
+          distanceUnits: nearestDist,
+        });
+      }
+      navState.setPosition(camera.position.clone());
+      return;
     }
 
     // ---------------------------------------------------------------

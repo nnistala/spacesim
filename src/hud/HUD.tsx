@@ -5,6 +5,25 @@ import { useProximityStore } from '../stores/proximityStore';
 import { formatRealDistance } from '../data/scaleConfig';
 import { xrStore } from '../stores/xrStore';
 
+/** True once we've confirmed the browser can start an immersive-VR session
+ *  (e.g. a Quest headset). Drives whether the VR button is shown at all. */
+function useVRSupported() {
+  const [supported, setSupported] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const xr = (navigator as Navigator & {
+      xr?: { isSessionSupported?: (mode: string) => Promise<boolean> };
+    }).xr;
+    xr?.isSessionSupported?.('immersive-vr')
+      .then((ok) => live && setSupported(!!ok))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  return supported;
+}
+
 /** Touch / small-screen devices: hide desktop-only chrome, shrink the HUD. */
 function useIsMobile() {
   const compute = () =>
@@ -39,6 +58,7 @@ export default function HUD() {
   const locationBreadcrumb = useUIStore((s) => s.locationBreadcrumb);
   const nearest = useProximityStore((s) => s.nearest);
   const mobile = useIsMobile();
+  const vrSupported = useVRSupported();
 
   return (
     <div
@@ -182,8 +202,9 @@ export default function HUD() {
         </div>
       )}
 
-      {/* Bottom-center: Control buttons (VR hidden on mobile — WebXR VR is
-          desktop/headset only). Smaller on mobile. */}
+      {/* Bottom-center: Control buttons. VR shows only when the browser can
+          actually start an immersive session (e.g. a Quest headset). Smaller
+          on mobile. */}
       <div
         style={{
           position: 'absolute',
@@ -198,7 +219,7 @@ export default function HUD() {
         {[
           { label: 'SEARCH', icon: '🔍', onClick: () => useUIStore.getState().toggleSearch() },
           { label: 'TIME', icon: '⏱', onClick: () => useUIStore.getState().toggleTime() },
-          ...(mobile ? [] : [{ label: 'VR', icon: '🥽', onClick: () => xrStore.enterVR() }]),
+          ...(vrSupported ? [{ label: 'VR', icon: '🥽', onClick: () => xrStore.enterVR() }] : []),
         ].map(({ label, icon, onClick }) => (
           <button
             key={label}

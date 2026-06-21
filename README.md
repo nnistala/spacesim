@@ -36,7 +36,7 @@ A free-flight space simulator spanning **six scales** — surface → orbital �
 - **Targeting scope** — a reticle that locks onto and names whatever body is in your sights.
 - **Search & fly-to** — press `/`, type any object's name, and warp straight to a perfectly framed view.
 - **Time controls** — pause or speed up the simulation to watch moons and satellites orbit.
-- **WebXR / VR ready** — enter VR on a headset with one click.
+- **WebXR / VR (experimental)** — on a Quest or other WebXR headset, a **VR** button appears; step inside and fly the universe in your hands. Left stick flies you where you're looking, right stick snap-turns, grip/trigger boosts. *(The flat-screen HUD and search don't render in-headset yet — see the roadmap.)*
 
 ## 🖼 Gallery
 
@@ -71,6 +71,8 @@ Wonder and rigour aren't opposites here — the awe *comes from* the fact that i
 | Scroll | Adjust speed |
 | `/` | Search the universe → fly to any object |
 | Targeting scope | Auto-names the body in your sights |
+
+**In VR** (Quest / WebXR headset): **left stick** — fly where you look · **right stick** — snap-turn · **grip / trigger** — boost. Speed scales with how close you are, so the same nudge crawls you up to the ISS or warps you between galaxies.
 
 ## 🧰 Tech stack
 
@@ -114,6 +116,7 @@ The list is never really finished — there's always one more beautiful thing ou
 - The **Laniakea Supercluster**'s great gravitational river of galaxies
 - Progressive **2K → 8K** texture streaming as you draw close
 - The Sun's twisting **magnetic field** made visible
+- **In-headset UI** — bring the labels, search and targeting scope into the 3D scene so VR is fully self-contained (and a WebXR-aware bloom pass)
 
 ## 🙏 Credits & data
 

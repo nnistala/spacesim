@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { EffectComposer, Bloom, ToneMapping } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
-import { XR } from '@react-three/xr'
+import { XR, useXR } from '@react-three/xr'
 import * as THREE from 'three'
 
 import { xrStore } from './stores/xrStore'
@@ -22,6 +22,7 @@ import Wormhole from './objects/Wormhole'
 import WarpTunnel from './objects/WarpTunnel'
 import Cosmos from './objects/Cosmos'
 import SpaceNavigator from './controls/SpaceNavigator'
+import XRFlight from './controls/XRFlight'
 import Joystick from './controls/Joystick'
 import HUD from './hud/HUD'
 import SearchPanel from './hud/SearchPanel'
@@ -55,28 +56,42 @@ function SolarSystemScene() {
   )
 }
 
+// Bloom + tone-mapping composer. Disabled inside an immersive XR session:
+// the postprocessing EffectComposer renders a single fullscreen pass and breaks
+// WebXR's stereo (per-eye) rendering, so in VR we fall back to the plain
+// pipeline. (Re-enable later via a WebXR-aware composer.)
+function PostFX() {
+  const inXR = useXR((s) => s.session != null)
+  if (inXR) return null
+  return (
+    <EffectComposer multisampling={0}>
+      <Bloom
+        intensity={0.7}
+        luminanceThreshold={0.78}
+        luminanceSmoothing={0.25}
+        mipmapBlur
+      />
+      {/* PBR Neutral preserves colour saturation instead of crushing bright
+          additive points (stars/galaxies/nebulae) to white like ACES does. */}
+      <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+    </EffectComposer>
+  )
+}
+
 function Scene() {
   return (
     <>
       <color attach="background" args={['#000000']} />
       <SpaceNavigator />
+      {/* VR locomotion — only does anything inside an immersive session. */}
+      <XRFlight />
       <Suspense fallback={null}>
         <SolarSystemScene />
         <ObjectLabels />
       </Suspense>
       {/* Wormhole-jump cutscene overlay (shown only mid-jump). */}
       <WarpTunnel />
-      <EffectComposer multisampling={0}>
-        <Bloom
-          intensity={0.7}
-          luminanceThreshold={0.78}
-          luminanceSmoothing={0.25}
-          mipmapBlur
-        />
-        {/* PBR Neutral preserves colour saturation instead of crushing bright
-            additive points (stars/galaxies/nebulae) to white like ACES does. */}
-        <ToneMapping mode={ToneMappingMode.NEUTRAL} />
-      </EffectComposer>
+      <PostFX />
     </>
   )
 }
